@@ -1,0 +1,54 @@
+html,
+body {
+  overflow-x: hidden;
+}
+a {
+  color: #ED6D46;
+  text-decoration: none;
+}
+
+a:hover {
+  color: grey;
+  text-decoration: none;
+}
+
+.button {
+  color: white;
+  background-color: #ED6D46;
+  border-color: #ED6D46;
+}
+.button:hover {
+  color: #ED6D46;
+  background-color: white;
+  border-color: #ED6D46;
+  font-weight: 600;
+}
+.button:active,
+.button:focus {
+  background-color: #ED6D46;
+  border-color: #ED6D46;
+}
+
+.image-container {
+  background-image: url("/images/yarn.png");
+  background-size: cover;
+  background-position: 0 -400px;
+  background-color: rgba(255, 255, 255, 0.3);
+  background-blend-mode: overlay;
+  background-repeat: no-repeat;
+}
+
+.inline-with-text {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px auto;
+  width: 100%;
+}
+.inline-with-text::before,
+.inline-with-text::after {
+  content: " ";
+  flex: 1;
+  border-bottom: 1px solid grey;
+  margin: 0 5px;
+}
