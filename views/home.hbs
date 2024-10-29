@@ -1,4 +1,92 @@
-{{> messages}}
-<p>Home Page</p>
+<div class="d-flex">
+  <div class="d-flex flex-column col-md-2 p-2">
+    <img src="/images/logo.png" class="mt-5 ms-3" alt="logo" width="65%">
+    <ul class="nav flex-column mt-4">
+      <li class="nav-item mb-3">
+        <a class="nav-link" aria-current="page" href="#"><i class="fa-regular fa-bell me-2"></i>Notice</a>
+      </li>
+      <li class="nav-item mb-3">
+        <a class="nav-link" href="/posts/create"><i class="fa-solid fa-plus me-2"></i>Create Post</a>
+      </li>
+      <li class="nav-item mb-3">
+        <a class="nav-link" href="/profile/{{user.id}}"><i class="fa-regular fa-user me-2"></i>Profile</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/logout"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout</a>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="vr" style="height: 100; min-height:100vh"></div>
 
-<a href="/logout">logout</a>
+  <div class="container mb-3">
+
+    <div class="d-flex flex-column">
+      {{!-- navbar --}}
+      <div class="navbar ms-4 me-2">
+        <ul class="nav nav-underline">
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/feeds">Feeds</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/following">Following</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/popular">Popular</a>
+          </li>
+        </ul>
+      
+        <div class="ms-auto col-md-3 my-3">
+          <form class="d-flex" role="search">
+            <input class="form-control me-2" type="search" placeholder="搜尋" aria-label="Search">
+            <button class="btn button button-b" type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+      <div class="ms-3">
+        <hr>
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a class="nav-link active" href="/posts/feeds">All</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/following">Beginner</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/popular">Hat</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/popular">Scarf</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/posts/popular">Bag</a>
+          </li>
+        </ul>
+      </div>
+      
+      {{> messages}}
+
+      {{!-- posts --}}
+      <div class="post-container row mt-3 d-flex gap-4 ps-4">
+        {{!-- {{#each posts}} --}}
+        <div class="card" style="width: 18rem; padding: 0;">
+          <a href="posts/{{this.id}}">
+            <img src="/images/yarn.png" class="card-img-top" style="height: 230px; object-fit:cover;" alt="post image">
+          </a>
+          
+          <div class="card-body">
+            <h5 class="card-title"><a href="posts/{{this.id}}">Card title</a></h5>
+            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.
+            </p>
+            <i class="fa-regular fa-heart fa-xl float-end me-2 mt-3" style="color: #ED6D46;"></i>
+          </div>
+        </div>
+        {{!-- {{/each}} --}}
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

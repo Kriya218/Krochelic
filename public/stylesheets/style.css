@@ -3,7 +3,7 @@ body {
   overflow-x: hidden;
 }
 a {
-  color: #ED6D46;
+  color: #ED6D46 !important;
   text-decoration: none;
 }
 
@@ -17,6 +17,13 @@ a:hover {
   background-color: #ED6D46;
   border-color: #ED6D46;
 }
+.button-b {
+  color: white;
+  background-color: #F9C385;
+  border-color: #F9C385;
+  font-weight: 600;
+}
+
 .button:hover {
   color: #ED6D46;
   background-color: white;
@@ -51,4 +58,9 @@ a:hover {
   flex: 1;
   border-bottom: 1px solid grey;
   margin: 0 5px;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #ED6D46;
+  color: #ffffff !important;
 }
