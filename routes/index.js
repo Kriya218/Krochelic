@@ -11,6 +11,10 @@ router.post('/signup', userController.signUp)
 router.get('/signin', userController.signInPage)
 router.post('/signin', passport.authenticate('local', {
   failureRedirect:'/signin', failureFlash: true }), userController.signIn)
+router.get('/oauth/login/google', passport.authenticate('google', { scope: ['email', 'profile'] }))
+router.get('/oauth/redirect/google', passport.authenticate('google', {
+  failureRedirect: '/signin', failureFlash: true
+}), userController.signIn)
 router.get('/logout', userController.logout)
 
 router.get('/', postController.home)

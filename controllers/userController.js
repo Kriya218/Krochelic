@@ -14,9 +14,9 @@ const userController = {
         if (user) throw new Error('此Email已註冊')
         return bcrypt.hash(password, 10)
       })
-      .then(hashedpPwd => User.create({
+      .then(hashedPwd => User.create({
           name,
-          password: hashedpPwd,
+          password: hashedPwd,
           email,
           image: '/images/default-profile.png'
         })
@@ -31,7 +31,6 @@ const userController = {
     res.render('signin')
   },
   signIn: (req, res, next) => {
-    console.log('LOGIN SUCCESS!')
     req.flash('successMsg', '登入成功')
     return res.redirect('/')
   },
