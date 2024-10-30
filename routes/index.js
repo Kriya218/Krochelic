@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const passport = require('../config/passport')
 const { authenticated } = require('../middleware/auth')
+const { uploadMultiple } = require('../middleware/multer')
 const userController = require('../controllers/userController')
 const postController = require('../controllers/postController')
 const { generalErrorHandler } = require('../middleware/error-handler')
@@ -17,6 +18,8 @@ router.get('/oauth/redirect/google', passport.authenticate('google', {
 }), userController.signIn)
 router.get('/logout', userController.logout)
 
+router.get('/posts/create', authenticated, postController.createPost)
+router.post('/posts/create', uploadMultiple, postController.postPost)
 router.get('/', postController.home)
 
 router.get('/', (req, res) => res.redirect('/'))

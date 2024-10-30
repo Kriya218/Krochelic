@@ -1,5 +1,5 @@
 const authenticated = (req, res, next) => {
-  if (req.isAuthenticate()) {
+  if (req.isAuthenticated()) {
     return next()
   }
   req.flash('errMsg', '請先登入')

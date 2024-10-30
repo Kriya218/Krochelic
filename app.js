@@ -5,6 +5,7 @@ if (process.env.NODE_ENV === 'development') {
 const express = require('express')
 const flash = require('connect-flash')
 const session = require('express-session')
+const path = require('path')
 
 const { engine } = require('express-handlebars')
 const passport = require('./config/passport')
@@ -29,6 +30,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 app.use(flash())
+app.use('/upload', express.static(path.join(__dirname, 'upload')))
 app.use((req, res, next) => {
   res.locals.successMsg = req.flash('successMsg')
   res.locals.errMsg = req.flash('errMsg')

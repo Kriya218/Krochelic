@@ -26,7 +26,7 @@
       <div class="navbar ms-4 me-2">
         <ul class="nav nav-underline">
           <li class="nav-item">
-            <a class="nav-link" href="/posts/feeds">Feeds</a>
+            <a class="nav-link" href="/">Feeds</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/posts/following">Following</a>
@@ -43,6 +43,9 @@
           </form>
         </div>
       </div>
+
+      {{> messages}}
+      
       <div class="ms-3">
         <hr>
         <ul class="nav nav-pills">
@@ -63,8 +66,6 @@
           </li>
         </ul>
       </div>
-      
-      {{> messages}}
 
       {{!-- posts --}}
       <div class="post-container row mt-3 d-flex gap-4 ps-4">
