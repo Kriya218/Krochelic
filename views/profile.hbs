@@ -1,0 +1,30 @@
+{{> nav}}
+<div class="col">
+  <div class="d-flex my-5 justify-content-center">
+    <div class="col-md-2">
+      <img src="{{profile.image}}" class="profile-img ms-5" alt="profile photo">
+    </div>
+    <div class="d-flex flex-column mt-3 ms-5 col-md-6">
+      <h4>{{profile.name}}</h4>
+      <p class="my-2"><span class="me-2">{{postAmount}}Posts</span> <span class="me-2">Followings</span> <span>Followers</span></p>
+      <div>
+        {{#ifCond singInUser profileId}}
+          <button class="btn button button-b mt-3">Edit Profile</button>
+        {{else}}
+          <button class="btn button mt-3"><i class="fa-solid fa-user-plus me-2"></i>Follow</button>
+        {{/ifCond}}
+      </div>
+    </div>
+    
+  </div>
+
+  <div class="row m-3 ms-5">
+    {{#each postsInfo}}
+    <div class="card m-3 p-0" style="width: 15rem;">
+      <a href="posts/{{this.id}}">
+        <img src="/{{this.images.[0]}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
+      </a>
+    </div>
+    {{/each}}
+    
+</div>

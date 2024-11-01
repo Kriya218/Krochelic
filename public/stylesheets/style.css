@@ -12,16 +12,21 @@ a:hover {
   text-decoration: none;
 }
 
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
 .button {
   color: white;
   background-color: #ED6D46;
   border-color: #ED6D46;
 }
 .button-b {
-  color: white;
-  background-color: #F9C385;
-  border-color: #F9C385;
-  font-weight: 600;
+  color: #ED6D46;
+  background-color: #fcf3e3;
+  border-color: #fcf3e3;
 }
 
 .button:hover {
@@ -63,4 +68,10 @@ a:hover {
 .nav-pills .nav-link.active {
   background-color: #ED6D46;
   color: #ffffff !important;
+}
+
+.profile-img {
+  width: 150px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
 }

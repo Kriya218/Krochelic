@@ -1,5 +1,5 @@
 node_modules/
 temp/
-uploads/
+upload/
 .DS_Store
 .env

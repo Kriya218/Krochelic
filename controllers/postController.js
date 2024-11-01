@@ -1,10 +1,16 @@
-
+const path = require('path')
 const { Post, Category, Image } = require('../models')
 
 
 const postController = {
   home: (req, res, next) => {
-    res.render('home')
+    try {
+      const userId = req.user?.id
+      return res.render('home', { userId })
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
   },
   createPost: async(req, res, next) => {
     try {
@@ -19,24 +25,23 @@ const postController = {
   },
   postPost: async (req, res, next) => {
     try {
-      console.log('triggered')
       const { title, categoryId, content } = req.body
-      const image = req.files
-      
+      const images = req?.files.map(file => {
+        return path.posix.join('upload', file.filename)
+      })
       const userId = req.user.id
-      console.log('title:', title)
-      console.log('image:', image)
+
       const newPost = await Post.create({
         title,
         categoryId,
         content,
         userId
       })
-      if (image && image.length > 0) {
-        const imageInfos = image.map(img => {
+      if (images && images.length > 0) {
+        const imageInfos = images.map(img => {
           return {
             postId: newPost.id,
-            path: img.path
+            path: img
           }
         })
         await Image.bulkCreate(imageInfos)
