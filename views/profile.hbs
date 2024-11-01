@@ -2,16 +2,17 @@
 <div class="col">
   <div class="d-flex my-5 justify-content-center">
     <div class="col-md-2">
-      <img src="{{profile.image}}" class="profile-img ms-5" alt="profile photo">
+      <img src="{{pathCheck profile.image}}" class="profile-img ms-5" alt="profile photo">
     </div>
     <div class="d-flex flex-column mt-3 ms-5 col-md-6">
       <h4>{{profile.name}}</h4>
       <p class="my-2"><span class="me-2">{{postAmount}}Posts</span> <span class="me-2">Followings</span> <span>Followers</span></p>
       <div>
         {{#ifCond singInUser profileId}}
-          <button class="btn button button-b mt-3">Edit Profile</button>
+          <a href="/profile/{{profile.id}}/edit" class="btn button button-b mt-3" tabindex="-1" role="button" aria-disabled="true">Edit Profile</a>
         {{else}}
-          <button class="btn button mt-3"><i class="fa-solid fa-user-plus me-2"></i>Follow</button>
+          <a href="#" class="btn button button-b mt-3" tabindex="-1" role="button"
+            aria-disabled="true"><i class="fa-solid fa-user-plus me-2"></i>Follow</a>
         {{/ifCond}}
       </div>
     </div>

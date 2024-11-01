@@ -1,6 +1,7 @@
 const { User, Post, Image } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
+const path = require('path')
 
 const userController = {
   signUpPage: (req, res) => {
@@ -69,6 +70,38 @@ const userController = {
       return res.render('profile', { profile, postAmount, postsInfo, profileId, singInUser })
     } catch (err) {
       console.log('Error:', err)
+      next(err)
+    }
+  },
+  editProfile: async (req, res, next) => {
+    try {
+      const userId = req.user.id
+      const user = await User.findByPk(userId,{
+        attributes: ['id', 'name', 'image'],
+        raw: true
+      })
+      if (userId !== parseInt(req.params.id)) throw new Error('無編輯權限')
+      return res.render('profileEdit', { user })
+    } catch (err) {
+      console.log(err)
+      next(err)
+    }
+  },
+  putProfile: async (req, res, next) => {
+    try {
+      const { name } = req.body
+      const file = req.file
+      console.log("file:", req.file)
+      const filePath = file ? path.posix.join('upload', file.filename) : null
+      const profileInfo = await User.findByPk(req.user.id)
+      await profileInfo.update({
+        name,
+        image: filePath || profileInfo.image
+      })
+      req.flash('編輯成功')
+      return res.redirect(`/profile/${req.user.id}`)
+    } catch (err) {
+      console.log(err)
       next(err)
     }
   }

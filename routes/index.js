@@ -19,8 +19,10 @@ router.get('/oauth/redirect/google', passport.authenticate('google', {
 router.get('/logout', userController.logout)
 
 router.get('/posts/create', authenticated, postController.createPost)
-router.post('/posts/create', upload.array('images', 4), postController.postPost)
+router.post('/posts/create', authenticated, upload.array('images', 4), postController.postPost)
 
+router.get('/profile/:id/edit', authenticated, userController.editProfile)
+router.put('/profile/:id/edit', authenticated, upload.single('image'), userController.putProfile)
 router.get('/profile/:id', userController.profile)
 
 router.get('/', postController.home)

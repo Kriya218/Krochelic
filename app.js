@@ -11,7 +11,7 @@ const { engine } = require('express-handlebars')
 const passport = require('./config/passport')
 
 const handlebarsHelpers = require('./helpers/handlebarsHelpers')
-
+const methodOverride = require('method-override')
 const app = express()
 const routes = require ('./routes')
 const port = process.env.PORT || 3000
@@ -22,6 +22,7 @@ app.set('views', './views')
 
 app.use(express.urlencoded({ extended: true })) 
 app.use(express.static('public'))
+app.use(methodOverride('_method'))
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
