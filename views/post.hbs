@@ -1,33 +1,54 @@
-<div class="d-flex row justify-content-center" style="background-color: #fcf3e3; min-height:100vh;">
-  <div style="width: 15%;">
-    <a href="/"><img src="/images/logo.png" style="width: 100%" class="mt-3" alt="logo"></a>
+{{> nav}}
+<div class="container d-flex justify-content-center p-5">
+  <div class="card col-md-10" style="height: 360px">
+    <div class="row">
+      {{!-- images --}}
+      <div class="col-md-auto px-auto">
+        <div style="width: 360px; height: 360px; aspect-ratio: 1 / 1;">
+          <div id="imageCarousel" class="carousel slide" style="height: 100%;">
+            <div class="carousel-inner d-flex align-items-center" style="height: 100%;">
+              {{#each images}}
+              <div class="carousel-item {{#if @first}}active{{/if}}">
+                <img src="/{{this.path}}" class="d-block w-100" style="height: 100%; object-fit: cover;"
+                  alt="Image {{@index}}">
+              </div>
+              {{/each}}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {{!-- post --}}
+      <div class="col-md-7">
+        <div class="d-flex mt-3">
+          <h5 class="mb-0 ps-3 my-auto" style="display: inline-block;">{{postInfo.title}}</h5>
+          <span class="btn button-b ms-auto my-auto p-1" style="pointer-events: none;">{{postInfo.Category.name}}</span>
+        </div>
+        
+        <hr class="my-3">
+        <ul class="ps-3" style="height: 57%;">
+          <li class="mb-3">
+            <span>
+              <img src="{{pathCheck postInfo.User.image}}" class="profile-img" style="width: 30px;" alt="profile photo">
+            </span>
+            <a href="/profile/{{postInfo.userId}}">{{postInfo.User.name}}</a>
+          </li>
+          <li class="mb-3">{{postInfo.content}}</li>
+        </ul>
+        <hr class="mb-3">
+        <div class="mb-3">
+          <i class="fa-regular fa-heart fa-xl ps-3 me-3" style="color: #ED6D46;"></i>
+          <span>??? liked</span>
+        </div>
+        
+      </div>
+    </div>
   </div>
-  
-  <h3 class="d-flex justify-content-center mb-4">Create New Post</h3>
-  <div class="col-md-6">
-    <form action="/posts/create" method="post" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="title" class="form-label">Title</label>
-        <input type="text" class="form-control" id="title" name="title" required>
-      </div>
-      <div class="mb-3">
-        <label for="categoryId" class="form-label">Category</label>
-        <select class="form-select" id="categoryId" name="categoryId">
-          {{#each categories}}
-            <option value="{{this.id}}"> {{this.name}} </option>
-          {{/each}}
-        </select>
-      </div>
-      <div class="mb-3">
-        <label for="content" class="form-label">Content</label>
-        <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="images" class="form-label">Image</label>
-        <input type="file" class="form-control" id="images" name="images" multiple required>
-      </div>
-      <button type="submit" class="btn button d-flex mx-auto mt-4">Submit</button>
-    </form>
-  </div>
-  
 </div>

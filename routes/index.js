@@ -20,6 +20,7 @@ router.get('/logout', userController.logout)
 
 router.get('/posts/create', authenticated, postController.createPost)
 router.post('/posts/create', authenticated, upload.array('images', 4), postController.postPost)
+router.get('/posts/:id', postController.getPost)
 
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id/edit', authenticated, upload.single('image'), userController.putProfile)

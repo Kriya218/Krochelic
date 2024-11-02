@@ -1,5 +1,5 @@
 const path = require('path')
-const { Post, Category, Image } = require('../models')
+const { User, Post, Category, Image } = require('../models')
 
 
 const postController = {
@@ -18,8 +18,39 @@ const postController = {
         attributes: ['id', 'name'],
         raw: true
       })
-      return res.render('post', { categories } )
+      return res.render('postCreate', { categories } )
     } catch (err) {
+      next(err)
+    }
+  },
+  getPost: async (req, res, next) => {
+    try {
+      const postId = req.params.id
+      const postInfo = await Post.findByPk(postId, {
+        attributes: ['id', 'title', 'categoryId','content', 'userId'],
+        include: [
+          { 
+            model: User,
+            attributes: ['name', 'image']
+          },
+          {
+            model: Category,
+            attributes:['name']
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+      const images = await Image.findAll({
+        where: { postId },
+        attributes: ['id', 'path'],
+        raw: true
+      })
+      console.log('postInfo:', postInfo)
+      console.log('images:', images)
+      return res.render('post', { postInfo, images })
+    } catch (err) {
+      console.log('Error:', err)
       next(err)
     }
   },
