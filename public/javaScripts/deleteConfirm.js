@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.addEventListener('click', function addDeleteDataId (evt) {
-    const deleteIcon = document.querySelector('#confirm-delete-button')
-    deleteIcon.setAttribute('form', 'delete-post-form')
+  document.querySelectorAll('.delete-button').forEach(btn => {
+    btn.addEventListener('click', function addDeleteDataId (evt) {
+      const id = evt.currentTarget.getAttribute('comment-id')
+      const deleteIcon = document.querySelector('#confirm-delete-button')
+      deleteIcon.setAttribute('form', `delete-form-${id}`)
+    })
   })
 })

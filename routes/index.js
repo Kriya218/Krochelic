@@ -5,6 +5,7 @@ const { authenticated } = require('../middleware/auth')
 const upload = require('../middleware/multer')
 const userController = require('../controllers/userController')
 const postController = require('../controllers/postController')
+const commentController = require('../controllers/commentController')
 const { generalErrorHandler } = require('../middleware/error-handler')
 
 router.get('/signup', userController.signUpPage)
@@ -24,6 +25,9 @@ router.delete('/posts/:id', authenticated, postController.deletePost)
 router.get('/posts/create', authenticated, postController.createPost)
 router.post('/posts', authenticated, upload.array('images', 4), postController.postPost)
 router.get('/posts/:id', postController.getPost)
+
+router.post('/comments', authenticated, commentController.postComment)
+router.delete('/comments/:id', authenticated, commentController.deleteComment)
 
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id', authenticated, upload.single('image'), userController.putProfile)

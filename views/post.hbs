@@ -1,11 +1,12 @@
 {{> nav}}
 
-<div class="container d-flex justify-content-center p-5">
-  <div class="card col-md-10" style="height: 360px">
+<div class="container d-flex justify-content-center p-5 row">
+  {{> messages}}
+  <div class="card col-md-10" style="height: 540px;">
     <div class="row">
       {{!-- images --}}
-      <div class="col-md-auto px-auto">
-        <div style="width: 360px; height: 360px; aspect-ratio: 1 / 1;">
+      <div class="col-md-auto px-0 pb-0">
+        <div style="width: 540px; height: 540px;">
           <div id="imageCarousel" class="carousel slide" style="height: 100%;">
             <div class="carousel-inner d-flex align-items-center" style="height: 100%;">
               {{#each images}}
@@ -26,15 +27,16 @@
           </div>
         </div>
       </div>
-      {{!-- post --}}
-      <div class="col-md-7">
+      
+      <div class="col-md-5 ms-3">
+        {{!-- post --}}
         <div class="d-flex mt-3">
           <h5 class="mb-0 ps-3 my-auto" style="display: inline-block;">{{postInfo.title}}</h5>
           <span class="btn button-b ms-auto my-auto p-1" style="pointer-events: none;">{{postInfo.Category.name}}</span>
         </div>
         
         <hr class="my-3">
-        <ul class="ps-3" style="height: 57%;">
+        <ul class="ps-3" style="height: 90%; overflow-y: auto; max-height: 20em;">
           <li class="mb-3">
             <span>
               <img src="{{pathCheck postInfo.User.image}}" class="profile-img" style="width: 30px;" alt="profile photo">
@@ -42,29 +44,69 @@
             <a href="/profile/{{postInfo.userId}}">{{postInfo.User.name}}</a>
           </li>
           <li id="postContent" class="mb-3" style="white-space: pre-wrap;">{{postInfo.content}}</li>
-        </ul>
-        <hr class="mb-3">
-        <div class="mb-3 d-flex">
-          <span><i class="fa-regular fa-heart fa-xl ps-3 me-3" style="color: #ED6D46;"></i></span>
-          <span>??? liked</span>
-          {{#ifCond postInfo.userId userId}}
-            <span class="ms-auto">
-              <a href="/posts/{{postInfo.id}}/edit" class="me-3"><i class="fa-regular fa-pen-to-square me-2"></i>Edit</a>
+
+          {{#if comments}}
+            <hr class="mb-3">
+          {{/if}}
+
+          {{#each comments}}
+          <li class="mb-3">
+            <div class="d-flex mb-3">
               <span>
-                <form id="delete-post-form" action="/posts/{{postInfo.id}}?_method=DELETE" method="post" style="display:inline-block">
-                  <button type="button" data-bs-toggle="modal" data-bs-target="#delete-warning" style="background: none; border: none">
-                    <i class="fa-solid fa-trash me-2" style="color: #ED6D46;"></i>
+                <img src="{{pathCheck this.User.image}}" class="profile-img me-3" style="width: 40px;" alt="profile photo">
+              </span>
+              <div class="pe-1"><a href="/profile/{{this.User.id}}" class="me-2">{{this.User.name}}</a>{{this.content}}</div>
+              {{#ifCond ../userId ../postInfo.userId}}
+              <div class="ms-auto">
+                <form id="delete-form-{{this.id}}" action="/comments/{{this.id}}?_method=DELETE" method="post">
+                    <input type="hidden" name="postId" value="{{this.id}}" />
+                    <button type="button" class="text-button delete-button" style="color: grey; font-size:smaller;" data-bs-toggle="modal" data-bs-target="#delete-warning" comment-id="{{this.id}}">
+                      delete
                     </button>
+                </form>
+              </div>
+              {{/ifCond}}
+            </div>
+          </li>
+          {{/each}}
+        </ul>
+        
+        <hr class="mb-3">
+        <div class="mb-3 row">
+          <div class="d-flex">
+            <span><i class="fa-regular fa-heart fa-xl ps-3 me-3" style="color: #ED6D46;"></i></span>
+            <span>??? likes</span>
+            {{#ifCond postInfo.userId userId}}
+            <span class="ms-auto">
+              <a href="/posts/{{postInfo.id}}/edit" class="me-3">
+                <i class="fa-regular fa-pen-to-square me-2"></i>Edit
+              </a>
+              <span>
+                <form id="delete-form" action="/posts/{{postInfo.id}}?_method=DELETE" method="post"
+                  style="display:inline-block">
+                  <button type="button" data-bs-toggle="modal" data-bs-target="#delete-warning" class="text-button">
+                    <i class="fa-solid fa-trash me-2" style="color: #ED6D46;"></i>
+                  </button>
                 </form>
               </span>
             </span>
-          {{/ifCond}}
+            {{/ifCond}}
+          </div>
+          <div class="mt-3 ps-3" style="display: inline-block;">
+            <form action="/comments" method="post">
+              <span class="d-flex">
+                <input type="text" class="form-control  me-2" placeholder="Add a comment" name="content">
+                <input type="hidden" name="postId" value="{{postInfo.id}}" />
+                <button type="submit" style="background: none; border: none">post</button>
+              </span>
+            </form>
+          </div>
+          
         </div>
-        
       </div>
     </div>
   </div>
-</div>
+  
 
 {{> deleteWarning}}
 

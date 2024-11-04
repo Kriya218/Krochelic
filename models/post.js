@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       Post.belongsTo(models.Category, { foreignKey: 'categoryId' } )
       Post.belongsTo(models.User, { foreignKey: 'userId' })
       Post.hasMany(models.Image, { foreignKey: 'postId' })
+      Post.hasMany(models.Comment, { foreignKey: 'postId' })
     }
   }
   Post.init({

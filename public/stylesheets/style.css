@@ -41,6 +41,11 @@ ul {
   border-color: #ED6D46;
 }
 
+.text-button {
+  background: none;
+  border: none;
+}
+
 .image-container {
   background-image: url("/images/yarn.png");
   background-size: cover;

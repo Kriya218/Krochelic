@@ -62,7 +62,7 @@ const userController = {
         group: ['Post.id'],
         order: [['createdAt', 'DESC']],
         raw: true,
-        nest:true
+        nest: true
       })
       postsInfo.forEach(post => {
         post.images = post.images ? post.images.split(',') : []

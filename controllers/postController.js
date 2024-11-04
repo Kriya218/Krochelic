@@ -1,5 +1,5 @@
 const path = require('path')
-const { User, Post, Category, Image } = require('../models')
+const { User, Post, Category, Image, Comment } = require('../models')
 
 
 const postController = {
@@ -47,7 +47,18 @@ const postController = {
         attributes: ['id', 'path'],
         raw: true
       })
-      return res.render('post', { postInfo, images, userId })
+      const comments = await Comment.findAll({
+        where: { postId },
+        attributes: ['id', 'content', 'userId'],
+        include: [{
+          model: User,
+          attributes: ['id','name', 'image']
+        }],
+        order: [['createdAt', 'DESC']],
+        raw: true,
+        nest: true
+      }) || []
+      return res.render('post', { postInfo, images, userId, comments })
     } catch (err) {
       console.log('Error:', err)
       next(err)
