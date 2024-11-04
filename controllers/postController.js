@@ -25,6 +25,7 @@ const postController = {
   },
   getPost: async (req, res, next) => {
     try {
+      const userId = req.user?.id
       const postId = req.params.id
       const postInfo = await Post.findByPk(postId, {
         attributes: ['id', 'title', 'categoryId','content', 'userId'],
@@ -46,9 +47,7 @@ const postController = {
         attributes: ['id', 'path'],
         raw: true
       })
-      console.log('postInfo:', postInfo)
-      console.log('images:', images)
-      return res.render('post', { postInfo, images })
+      return res.render('post', { postInfo, images, userId })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -81,6 +80,51 @@ const postController = {
       return res.redirect('/')
     } catch (err) {
       console.log('ERROR:', err)
+      next(err)
+    }
+  },
+  editPost: async (req, res, next) => {
+    try {
+      const postsId = req.params.id
+      const postInfo = await Post.findByPk(postsId, {
+        attributes: ['id', 'title', 'categoryId', 'content', 'userId'],
+        raw: true
+      })
+      const categories = await Category.findAll({
+        attributes: ['id', 'name'],
+        raw: true
+      })
+      if (postInfo.userId !== req.user.id) throw new Error('無編輯權限')
+      return res.render('postEdit', { postInfo, categories })
+    } catch (err) {
+      console.log('Error:',err)
+      next(err)
+    }
+  },
+  putPost: async (req, res, next) => {
+    try {
+      const { title, categoryId, content } = req.body
+      const postId = req.params.id
+      const postInfo = await Post.findByPk(postId)
+      await postInfo.update({ title, categoryId, content })
+      req.flash('successMsg', '貼文編輯成功')
+      return res.redirect(`/posts/${postId}`)
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  deletePost: async (req, res, next) => {
+    try {
+      const postId = req.params.id
+      const post = await Post.findByPk(postId)
+      if (!post) throw new Error('貼文不存在')
+      if (post.userId !== req.user.id) throw new Error('無刪除權限')
+      await post.destroy()
+      req.flash('successMsg', '貼文刪除成功')
+      return res.redirect(`/profile/${req.user.id}`)
+    } catch (err) {
+      console.log('Error:', err)
       next(err)
     }
   }

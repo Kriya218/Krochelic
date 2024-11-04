@@ -7,7 +7,7 @@
     <div class="card my-3 shadow p-3 mb-5 bg-body-tertiary rounded">
       <div class="card-body">
         <h3 class="d-flex justify-content-center">Edit Profile Info</h3>
-        <form action="/profile/{{user.id}}/edit?_method=PUT" method="post" enctype="multipart/form-data">
+        <form action="/profile/{{user.id}}?_method=PUT" method="post" enctype="multipart/form-data">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <input type="text" class="form-control" id="name" name="name" value="{{user.name}}" required>
