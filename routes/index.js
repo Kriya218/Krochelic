@@ -28,6 +28,8 @@ router.get('/posts/:id', postController.getPost)
 
 router.post('/comments', authenticated, commentController.postComment)
 router.delete('/comments/:id', authenticated, commentController.deleteComment)
+router.post('/like/:postId', authenticated, userController.addLike)
+router.delete('/like/:postId', authenticated, userController.removeLike)
 
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id', authenticated, upload.single('image'), userController.putProfile)

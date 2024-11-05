@@ -1,5 +1,5 @@
 const path = require('path')
-const { User, Post, Category, Image, Comment } = require('../models')
+const { User, Post, Category, Image, Comment, Like } = require('../models')
 
 
 const postController = {
@@ -25,40 +25,32 @@ const postController = {
   },
   getPost: async (req, res, next) => {
     try {
-      const userId = req.user?.id
+      const userId = parseInt(req.user?.id)
       const postId = req.params.id
-      const postInfo = await Post.findByPk(postId, {
-        attributes: ['id', 'title', 'categoryId','content', 'userId'],
-        include: [
-          { 
-            model: User,
-            attributes: ['name', 'image']
-          },
-          {
-            model: Category,
-            attributes:['name']
-          }
-        ],
-        raw: true,
-        nest: true
-      })
-      const images = await Image.findAll({
-        where: { postId },
-        attributes: ['id', 'path'],
-        raw: true
-      })
-      const comments = await Comment.findAll({
-        where: { postId },
-        attributes: ['id', 'content', 'userId'],
-        include: [{
-          model: User,
-          attributes: ['id','name', 'image']
-        }],
-        order: [['createdAt', 'DESC']],
-        raw: true,
-        nest: true
-      }) || []
-      return res.render('post', { postInfo, images, userId, comments })
+      const [postInfo, images] = await Promise.all([
+        Post.findByPk(postId, {
+          attributes: ['id', 'title', 'categoryId','content', 'userId'],
+          include: [
+            { model: User, attributes: ['name', 'image'] },
+            { model: Category, attributes:['name'] },
+            {
+              model: Comment,
+              attributes: ['id', 'content', 'userId'],
+              include: [{ model: User, attributes: ['id','name', 'image'] }]
+            }
+          ],
+          order: [[{ model: Comment }, 'createdAt', 'DESC']],
+          nest: true
+        }),
+        Image.findAll({
+          where: { postId },
+          attributes: ['id', 'path'],
+          raw: true
+        })
+      ])
+      const rawPostInfo = postInfo.toJSON()
+      const isLiked = userId ? !!(await Like.findOne({ where: { postId, userId }})) : false
+      return res.render('post', { postInfo: rawPostInfo, images, isLiked, userId })
     } catch (err) {
       console.log('Error:', err)
       next(err)

@@ -1,4 +1,4 @@
-const { User, Post, Image } = require('../models')
+const { User, Post, Image, Like } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
 const path = require('path')
@@ -102,6 +102,35 @@ const userController = {
       return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {
       console.log(err)
+      next(err)
+    }
+  },
+  addLike: async (req, res, next) => {
+    try {
+      const { postId } = req.params
+      await Like.create({
+        postId,
+        userId: req.user.id
+      })
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  removeLike: async (req, res, next) => {
+    try {
+      const { postId } = req.params
+      const like = await Like.findOne({
+        where: {
+          postId,
+          userId: req.user.id
+        }
+      })
+      await like.destroy()
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
       next(err)
     }
   }

@@ -22,7 +22,6 @@ const commentController = {
     try {
       const { postId } = req.body
       const comment = await Comment.findByPk(postId)
-      if (!comment) throw new Error('評論不存在')
       await comment.destroy()
       req.flash('successMsg', '評論已刪除')
       return res.redirect(`/posts/${postId}`)
