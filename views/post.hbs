@@ -79,17 +79,17 @@
             {{#if isLiked}}
               <form action="/like/{{postInfo.id}}?_method=DELETE" method="post">
                 <button type="submit" class="text-button">
-                  <i class="fa-solid fa-heart fa-xl ps-3 me-3" style="color: #ED6D46;"></i>
+                  <i class="fa-solid fa-heart fa-xl ps-3 me-2" style="color: #ED6D46;"></i>
                 </button>
               </form>
             {{else}}
               <form action="/like/{{postInfo.id}}" method="post">
                 <button type="submit" class="text-button">
-                  <i class="fa-regular fa-heart fa-xl ps-3 me-3" style="color: #ED6D46;"></i>
+                  <i class="fa-regular fa-heart fa-xl ps-3 me-2" style="color: #ED6D46;"></i>
                 </button>
               </form>
             {{/if}}
-            <span>??? likes</span>
+            <span>{{likes}} likes</span>
             {{#ifCond postInfo.userId userId}}
             <span class="ms-auto">
               <a href="/posts/{{postInfo.id}}/edit" class="me-3">

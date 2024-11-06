@@ -27,7 +27,7 @@ const postController = {
     try {
       const userId = parseInt(req.user?.id)
       const postId = req.params.id
-      const [postInfo, images] = await Promise.all([
+      const [postInfo, images, likes] = await Promise.all([
         Post.findByPk(postId, {
           attributes: ['id', 'title', 'categoryId','content', 'userId'],
           include: [
@@ -46,11 +46,12 @@ const postController = {
           where: { postId },
           attributes: ['id', 'path'],
           raw: true
-        })
+        }),
+        Like.count({ where: {postId} })
       ])
       const rawPostInfo = postInfo.toJSON()
       const isLiked = userId ? !!(await Like.findOne({ where: { postId, userId }})) : false
-      return res.render('post', { postInfo: rawPostInfo, images, isLiked, userId })
+      return res.render('post', { postInfo: rawPostInfo, images, isLiked, userId, likes })
     } catch (err) {
       console.log('Error:', err)
       next(err)
