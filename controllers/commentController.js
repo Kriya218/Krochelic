@@ -1,5 +1,4 @@
 const { User, Comment } = require('../models')
-const { deletePost } = require('./postController')
 const commentController = {
   postComment: async (req, res, next) => {
     try {

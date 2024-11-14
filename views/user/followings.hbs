@@ -1,0 +1,38 @@
+{{> nav}}
+
+<div class="col">
+  <div class="d-flex my-5 justify-content-center">
+    <div class="card p-2 row col-md-4">
+      <div class="d-flex justify-content-end"><a href="/profile/{{profileUser}}" class="btn-close"></a></div>
+      <h5 class="modal-title d-flex justify-content-center mb-3">Followings</h5>
+      <ul class="d-flex mx-auto row" style="overflow-y: auto; max-height: 30em;">
+        {{#each followings}}
+          <li class="mb-4">
+            <div class="d-flex align-items-center">
+              <span>
+                <img src="{{pathCheck this.image}}" class="profile-img me-3" style="width: 40px;" alt="profile photo">
+              </span>
+              <div class="pe-1">
+                <a href="/profile/{{this.id}}" class="me-2">{{this.name}}</a>
+              </div>
+              {{#if ../signInUser}}
+                {{#if this.isFollowing}}
+                  <form action="/following/{{this.id}}?_method=DELETE" method="post" class="ms-auto">
+                    <button type="submit" class="btn button button-b">Unfollow</button>
+                  </form>
+                {{else}}
+                  {{#ifCond ../signInUser this.id}}
+                  {{else}}
+                    <form action="/following/{{this.id}}" method="post" class="ms-auto">
+                      <button type="submit" class="btn button button-b">Follow</button>
+                    </form>
+                  {{/ifCond}}
+                {{/if}}
+              {{/if}}
+            </div>
+          </li>
+        {{/each}}
+      </ul>
+    </div>
+  </div>
+</div>

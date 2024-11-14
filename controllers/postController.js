@@ -5,8 +5,9 @@ const { User, Post, Category, Image, Comment, Like } = require('../models')
 const postController = {
   home: (req, res, next) => {
     try {
-      const userId = req.user?.id
-      return res.render('home', { userId })
+      const signInUser = req.user?.id
+      console.log('singInUser:', signInUser)
+      return res.render('home', { signInUser })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -18,7 +19,7 @@ const postController = {
         attributes: ['id', 'name'],
         raw: true
       })
-      return res.render('postCreate', { categories } )
+      return res.render('posts/postCreate', { categories } )
     } catch (err) {
       next(err)
     }
@@ -51,7 +52,7 @@ const postController = {
       ])
       const rawPostInfo = postInfo.toJSON()
       const isLiked = userId ? !!(await Like.findOne({ where: { postId, userId }})) : false
-      return res.render('post', { postInfo: rawPostInfo, images, isLiked, userId, likes })
+      return res.render('posts/post', { postInfo: rawPostInfo, images, isLiked, userId, likes })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -81,7 +82,7 @@ const postController = {
         await Image.bulkCreate(imageInfos)
       }
       req.flash('successMsg', '貼文上傳成功')
-      return res.redirect('/')
+      return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {
       console.log('ERROR:', err)
       next(err)
@@ -99,7 +100,7 @@ const postController = {
         raw: true
       })
       if (postInfo.userId !== req.user.id) throw new Error('無編輯權限')
-      return res.render('postEdit', { postInfo, categories })
+      return res.render('posts/postEdit', { postInfo, categories })
     } catch (err) {
       console.log('Error:',err)
       next(err)

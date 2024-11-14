@@ -1,4 +1,4 @@
-const { User, Post, Image, Like } = require('../models')
+const { User, Post, Image, Like, Followship } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
 const path = require('path')
@@ -42,13 +42,20 @@ const userController = {
   },
   profile: async(req, res, next) => {
     try {
-      const singInUser = req.user?.id
+      const signInUser = req.user?.id
       const profileId = parseInt(req.params?.id)
       const profile = await User.findByPk(profileId , {
         attributes:['id', 'name', 'image'],
-        raw: true,
+        include: [
+          { model: User, as: 'Followers', attributes: ['id', 'name', 'image'],  },
+          { model: User, as: 'Followings', attributes: ['id', 'name', 'image'] }
+        ],
+        nest: true
       })
-      const postAmount = await Post.count({ where: { userId: profileId } })
+      if (!profile) {
+        req.flash('errMsg', '用戶不存在')
+        return res.redirect('back')
+      }
       const postsInfo = await Post.findAll({
         where: { userId: profileId },
         include: [{
@@ -64,10 +71,23 @@ const userController = {
         raw: true,
         nest: true
       })
+      const profileInfo = {
+        ...profile.toJSON(),
+        postsCount: postsInfo.length,
+        followersCount: profile.Followers.length,
+        followingsCount: profile.Followings.length,
+        isFollowing: profile.Followers.map(f => f.id).includes(parseInt(signInUser))
+      } 
       postsInfo.forEach(post => {
         post.images = post.images ? post.images.split(',') : []
       })
-      return res.render('profile', { profile, postAmount, postsInfo, profileId, singInUser })
+      
+      return res.render('user/profile', { 
+        profile : profileInfo,
+        postsInfo,
+        profileId,
+        signInUser
+      })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -81,7 +101,7 @@ const userController = {
         raw: true
       })
       if (userId !== parseInt(req.params.id)) throw new Error('無編輯權限')
-      return res.render('profileEdit', { user })
+      return res.render('user/profileEdit', { user })
     } catch (err) {
       console.log(err)
       next(err)
@@ -129,6 +149,100 @@ const userController = {
       })
       await like.destroy()
       return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  addFollow: async (req, res, next) => {
+    try {
+      const { userId } = req.params
+      const followship = await Followship.findOne({
+        where: { followerId: req.user.id, followingId: userId }
+      })
+      if (followship) throw new Error('已追蹤此使用者')
+      await Followship.create({
+        followingId: userId, 
+        followerId: req.user.id
+      })
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  removeFollow: async (req, res, next) => {
+    try {
+      const { userId } = req.params
+      const followship = await Followship.findOne({
+        where: { followerId: req.user.id, followingId: userId }
+      })
+      if (!followship) throw new Error('尚未追蹤此使用者')
+      await followship.destroy()
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  getFollowings: async (req, res, next) => {
+    try {
+      const signInUser = req.user?.id 
+      const profileUser = req.params.userId
+      const followingInfo = await User.findByPk(profileUser, {
+        include: [{
+          model: User,
+          as: 'Followings',
+          attributes: ['id', 'name', 'image']
+        }],
+        nest: true
+      })
+      let userFollowArr = []
+      if (signInUser) {
+        const userFollowInfo = await User.findByPk(signInUser, {
+          attributes: [],
+          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
+          nest: true
+        })
+        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
+      }
+      const followings = followingInfo?.toJSON().Followings.map(f => ({
+        ...f,
+        isFollowing: userFollowArr.includes(f.id)
+      }))
+      return res.render('user/followings', { followings, signInUser, profileUser })
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  getFollowers: async (req, res, next) => {
+    try {
+      const signInUser = req.user?.id 
+      const profileUser = req.params.userId
+      const followerInfo = await User.findByPk(profileUser, {
+        include: [{
+          model: User,
+          as: 'Followers',
+          attributes: ['id', 'name', 'image']
+        }],
+        nest: true
+      })
+
+      let userFollowArr = []
+      if (signInUser) {
+        const userFollowInfo = await User.findByPk(signInUser, {
+          attributes: [],
+          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
+          nest: true
+        })
+        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
+      }
+      const followers = followerInfo?.toJSON().Followers.map(f => ({
+        ...f,
+        isFollowing: userFollowArr.includes(f.id)
+      }))
+      return res.render('user/followers', { followers, signInUser, profileUser })
     } catch (err) {
       console.log('Error:', err)
       next(err)
