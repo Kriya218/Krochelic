@@ -13,6 +13,11 @@ const passport = require('./config/passport')
 const handlebarsHelpers = require('./helpers/handlebarsHelpers')
 const methodOverride = require('method-override')
 const app = express()
+
+const { Server } = require('socket.io')
+const server = require('http').createServer(app) 
+const io = new Server(server)
+
 const routes = require ('./routes')
 const port = process.env.PORT || 3000
 
@@ -23,11 +28,12 @@ app.set('views', './views')
 app.use(express.urlencoded({ extended: true })) 
 app.use(express.static('public'))
 app.use(methodOverride('_method'))
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false
-}))
+})
+app.use(sessionMiddleware)
 app.use(flash())
 app.use(passport.initialize())
 app.use(passport.session())
@@ -39,9 +45,14 @@ app.use((req, res, next) => {
   next()
 })
 
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, socket.request.res || {}, next)
+})
+require('./controllers/websocketController')(io)
+
 app.use(routes)
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`express server on http://localhost:${port}`)
 })
 
