@@ -1,7 +1,8 @@
-const { User, Post, Image, Like, Followship } = require('../models')
+const { User, Post, Image, Like, Followship, Subscribeship } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
 const path = require('path')
+
 
 const userController = {
   signUpPage: (req, res) => {
@@ -47,11 +48,23 @@ const userController = {
       const profile = await User.findByPk(profileId , {
         attributes:['id', 'name', 'image'],
         include: [
-          { model: User, as: 'Followers', attributes: ['id', 'name', 'image'],  },
+          { model: User, as: 'Followers', attributes: ['id', 'name', 'image'] },
           { model: User, as: 'Followings', attributes: ['id', 'name', 'image'] }
         ],
         nest: true
       })
+      let subscribeShip
+      if (signInUser) {
+        subscribeShip = await Subscribeship.findOne({ 
+          where: { 
+            subscriberId: signInUser,
+            subscribeId: profileId
+          },
+          raw: true
+        })
+      }
+      
+
       if (!profile) {
         req.flash('errMsg', '用戶不存在')
         return res.redirect('back')
@@ -76,12 +89,13 @@ const userController = {
         postsCount: postsInfo.length,
         followersCount: profile.Followers.length,
         followingsCount: profile.Followings.length,
-        isFollowing: profile.Followers.map(f => f.id).includes(parseInt(signInUser))
+        isFollowing: profile.Followers.map(f => f.id).includes(parseInt(signInUser)),
+        isSubscribe: subscribeShip ? true : false
       } 
       postsInfo.forEach(post => {
         post.images = post.images ? post.images.split(',') : []
       })
-      
+
       return res.render('user/profile', { 
         profile : profileInfo,
         postsInfo,

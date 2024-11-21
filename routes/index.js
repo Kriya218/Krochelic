@@ -6,6 +6,7 @@ const upload = require('../middleware/multer')
 const userController = require('../controllers/userController')
 const postController = require('../controllers/postController')
 const commentController = require('../controllers/commentController')
+const noticeController = require('../controllers/noticeController')
 const { generalErrorHandler } = require('../middleware/error-handler')
 
 router.get('/signup', userController.signUpPage)
@@ -28,6 +29,7 @@ router.get('/posts/:id', postController.getPost)
 
 router.post('/comments', authenticated, commentController.postComment)
 router.delete('/comments/:id', authenticated, commentController.deleteComment)
+
 router.post('/like/:postId', authenticated, userController.addLike)
 router.delete('/like/:postId', authenticated, userController.removeLike)
 router.post('/following/:userId', authenticated, userController.addFollow)
@@ -38,6 +40,8 @@ router.get('/followers/:userId', userController.getFollowers)
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id', authenticated, upload.single('image'), userController.putProfile)
 router.get('/profile/:id', userController.profile)
+
+router.get('/notice/:userId', authenticated, noticeController.getNotice)
 
 router.get('/', postController.home)
 

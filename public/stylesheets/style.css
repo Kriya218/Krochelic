@@ -80,3 +80,11 @@ ul {
   aspect-ratio: 1 / 1;
   border-radius: 50%;
 }
+
+#red-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+}

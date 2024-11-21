@@ -19,15 +19,21 @@
           <a href="/profile/{{profile.id}}/edit" class="btn button button-b mt-3" tabindex="-1" role="button" aria-disabled="true">Edit Profile</a>
         {{else}}
           {{#if profile.isFollowing}}
-            <form action="/following/{{profile.id}}?_method=DELETE" method="post">
+            <form action="/following/{{profile.id}}?_method=DELETE" method="post"  style="display: inline-block;">
               <button type="submit" class="btn button button-b mt-3">Unfollow</button>
             </form>
           {{else}}
-            <form action="/following/{{profile.id}}" method="post">
+            <form action="/following/{{profile.id}}" method="post" style="display: inline-block;">
               <button type="submit" class="btn button button-b mt-3">Follow</button>
             </form>
           {{/if}}
-          
+          {{#if profile.isSubscribe}}
+            <button id="subscribeBtn" type="button" class="btn button button-b mt-3" user-id="{{profile.id}}"> 
+              <i class="fa-solid fa-check me-2"></i> Subscribe
+            </button>
+          {{else}}
+            <button id="subscribeBtn" type="button" class="btn button button-b mt-3" user-id="{{profile.id}}"> Subscribe</button>
+          {{/if}}
         {{/ifCond}}
       </div>
     </div>
