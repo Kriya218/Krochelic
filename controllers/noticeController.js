@@ -1,3 +1,4 @@
+const { where } = require('sequelize')
 const { Notice, User, Post, Like, Comment } = require('../models')
 
 const noticeController = {
@@ -8,10 +9,12 @@ const noticeController = {
       if (!signInUser) throw new Error('請先登入')
       if (userId !== signInUser) throw new Error('無檢視通知權限')
       const notices = await Notice.findAll({
-        where: { notifyId: userId },
+        where: { notifyId: userId, isRead: false },
         order: [['createdAt', 'DESC']],
-        limit: 8,
         raw: true
+      })
+      await Notice.update({ isRead: true },{
+        where: { notifyId: userId, isRead: false } 
       })
       
       const noticeUserIds = [...new Set(notices.map(notice => notice.userId))]
@@ -29,7 +32,7 @@ const noticeController = {
         ...notice,
         userInfo: usersInfoMap[notice.userId]
       }))
-      
+
       return res.render('notice', { notices: formattedNotices, signInUser })
     } catch (err) {
       console.log('Error:', err)

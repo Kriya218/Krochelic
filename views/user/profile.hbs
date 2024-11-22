@@ -28,9 +28,11 @@
             </form>
           {{/if}}
           {{#if profile.isSubscribe}}
-            <button id="subscribeBtn" type="button" class="btn button button-b mt-3" user-id="{{profile.id}}"> 
-              <i class="fa-solid fa-check me-2"></i> Subscribe
-            </button>
+            <form action="/subscribe/{{profile.id}}?_method=DELETE" method="post" class="d-inline">
+              <button type="submit" class="btn button button-b mt-3"> 
+                <i class="fa-solid fa-check me-2"></i> Subscribe
+              </button>
+            </form>
           {{else}}
             <button id="subscribeBtn" type="button" class="btn button button-b mt-3" user-id="{{profile.id}}"> Subscribe</button>
           {{/if}}

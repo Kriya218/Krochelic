@@ -4,17 +4,25 @@ module.exports = (io) => {
   io.on('connection', async (socket) => {
     console.log('A user connected:', socket.id)
     try {
-      const userId = socket.request.session.passport?.user
-      if (!userId) throw new Error('User did not authenticate!')
-
-      const user = await User.findOne({ 
-        where: { id: userId },
-        attributes: ['id', 'image', 'name'],
-        raw: true
-      })
-      if (!user) throw new Error('User did not exist!')
+      const signInUserId = socket.request.session.passport?.user
       
-      const signInUserId = parseInt(user.id)
+      if (signInUserId) {
+        socket.join(signInUserId)
+        const unreadNotices = []
+        await Notice.findAll({
+          where: { notifyId: signInUserId, isRead: false }
+        })
+          .then(notices => {
+            notices.forEach(notice => {
+              unreadNotices.push(notice)
+            })
+          })
+        if (unreadNotices.length > 0) {
+          socket.emit('updateNavBar', { notifyId: signInUserId })
+        }
+      } else {
+        throw new Error('User did not authenticate!')
+      }
 
       // create subscribeship 我(登入者)去訂閱其他人時觸發
       socket.on('subscribe', async(subscribeId) => {
@@ -27,7 +35,7 @@ module.exports = (io) => {
             subscribeId,
             subscriberId: signInUserId
           })
-          socket.join(subscribeId)
+          // socket.join(subscribeId)
 
           const description = '訂閱了你的帳號'
           await Notice.create({
@@ -37,11 +45,12 @@ module.exports = (io) => {
             notifyId: subscribeId
           })
           
+
           // if subscribe user online submit navbar update event
-          const isSubscribeOnline = io.sockets.adapter.rooms.has(subscribeId)
-          console.log('isSubscribeOnline:', isSubscribeOnline)
+          const isSubscribeOnline = io.sockets.adapter.rooms.has(parseInt(subscribeId))
+          
           if (isSubscribeOnline) {
-            io.emit('updateNavBar', { subscribeId })
+            io.to(subscribeId).emit('updateNavBar', { notifyId: subscribeId })
           }
           // redirect to update subscribe button in profile
           socket.emit('redirect', { url: `/profile/${subscribeId}` })
@@ -59,12 +68,12 @@ module.exports = (io) => {
       // })
       
       // add user to subscribes room
-      const subscriptions = await Subscribeship.findAll({
-        where: { subscriberId: signInUserId }
-      })
-      subscriptions.forEach(subscribe => {
-        socket.join(subscribe.subscribeId)
-      })
+      // const subscriptions = await Subscribeship.findAll({
+      //   where: { subscriberId: signInUserId }
+      // })
+      // subscriptions.forEach(subscribe => {
+      //   socket.join(subscribe.subscribeId)
+      // })
 
       
 

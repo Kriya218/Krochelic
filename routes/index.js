@@ -32,10 +32,13 @@ router.delete('/comments/:id', authenticated, commentController.deleteComment)
 
 router.post('/like/:postId', authenticated, userController.addLike)
 router.delete('/like/:postId', authenticated, userController.removeLike)
+
 router.post('/following/:userId', authenticated, userController.addFollow)
 router.delete('/following/:userId', authenticated, userController.removeFollow)
 router.get('/followings/:userId', userController.getFollowings)
 router.get('/followers/:userId', userController.getFollowers)
+
+router.delete('/subscribe/:subscribeId', authenticated, userController.deleteSubscribe)
 
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id', authenticated, upload.single('image'), userController.putProfile)

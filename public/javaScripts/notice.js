@@ -41,11 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('updateNavBar', data => {
     const userId = document.querySelector('#userId').value
-    if (data.subscribeId === userId) {
-      const redDot = document.querySelector('#red-dot')
-      if (redDot) {
-        redDot.classList.remove('d-none')
-      }
+    const redDot = document.querySelector('#red-dot')
+    
+    if (data.notifyId === parseInt(userId) && redDot) {
+      redDot.classList.remove('d-none')
     }
   })
 })

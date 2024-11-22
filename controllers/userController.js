@@ -261,6 +261,23 @@ const userController = {
       console.log('Error:', err)
       next(err)
     }
+  },
+  deleteSubscribe: async (req, res, next) => {
+    try {
+      const { subscribeId } = req.params
+      const subscribeShip = await Subscribeship.findOne({
+        where: {
+          subscriberId: req.user.id,
+          subscribeId
+        }
+      })
+      if (!subscribeShip) throw new Error('尚未訂閱此用戶')
+      await subscribeShip.destroy()
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
   }
 }
 
