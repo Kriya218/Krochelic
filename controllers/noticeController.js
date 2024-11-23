@@ -32,7 +32,7 @@ const noticeController = {
         userInfo: usersInfoMap[notice.userId]
       }))
 
-      return res.render('notice', { notices: formattedNotices, profileUser: signInUser })
+      return res.render('notice', { notices: formattedNotices, signInUser })
     } catch (err) {
       console.log('Error:', err)
       next(err)

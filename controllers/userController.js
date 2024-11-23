@@ -1,4 +1,4 @@
-const { User, Post, Image, Like, Followship, Subscribeship } = require('../models')
+const { User, Post, Image, Like, Followship, Subscribeship, Notice } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
 const path = require('path')
@@ -139,35 +139,6 @@ const userController = {
       next(err)
     }
   },
-  addLike: async (req, res, next) => {
-    try {
-      const { postId } = req.params
-      await Like.create({
-        postId,
-        userId: req.user.id
-      })
-      return res.redirect('back')
-    } catch (err) {
-      console.log('Error:', err)
-      next(err)
-    }
-  },
-  removeLike: async (req, res, next) => {
-    try {
-      const { postId } = req.params
-      const like = await Like.findOne({
-        where: {
-          postId,
-          userId: req.user.id
-        }
-      })
-      await like.destroy()
-      return res.redirect('back')
-    } catch (err) {
-      console.log('Error:', err)
-      next(err)
-    }
-  },
   addFollow: async (req, res, next) => {
     try {
       const { userId } = req.params
@@ -257,6 +228,32 @@ const userController = {
         isFollowing: userFollowArr.includes(f.id)
       }))
       return res.render('user/followers', { followers, signInUser, profileUser })
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  addSubscribe: async (req, res, next) => {
+    try {
+      const { subscribeId } = req.params
+      
+      const subscribeShip = await Subscribeship.findOne({
+        where: { subscribeId, subscriberId: req.user.id }
+      })
+      if (subscribeShip) throw new Error('已訂閱此作者')
+      await Subscribeship.create({
+        subscribeId,
+        subscriberId: req.user.id
+      })
+
+      const description = '訂閱了你的帳號'
+      await Notice.create({
+        userId: req.user.id,
+        description,
+        isRead: false,
+        notifyId: subscribeId
+      })
+      return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
       next(err)

@@ -1,6 +1,5 @@
 const path = require('path')
-const { User, Post, Category, Image, Comment, Like } = require('../models')
-const { broadcastNewPost } = require('../controllers/websocketController')
+const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
 
 const postController = {
   home: (req, res, next) => {
@@ -61,17 +60,22 @@ const postController = {
   postPost: async (req, res, next) => {
     try {
       const { title, categoryId, content } = req.body
+      const userId = req.user.id
       const images = req?.files.map(file => {
         return path.posix.join('upload', file.filename)
       })
-      const userId = req.user.id
-
+      
+      const subscribeships = await Subscribeship.findAll({
+        where: { subscribeId: userId },
+        raw: true
+      })
       const newPost = await Post.create({
         title,
         categoryId,
         content,
         userId
       })
+      
       if (images && images.length > 0) {
         const imageInfos = images.map(img => {
           return {
@@ -81,14 +85,29 @@ const postController = {
         })
         await Image.bulkCreate(imageInfos)
       }
-      const postInfo = {
-        ...newPost.toJSON(),
-        postId: newPost.id,
+      
+      if (subscribeships.length > 0) {
+        await Promise.all(
+          subscribeships.map(subscribe => {
+            const subscriberId = subscribe.subscriberId
+            return Notice.create({
+              userId,
+              description: `發布了新貼文${title}`,
+              postId: newPost.id,
+              isRead: false,
+              notifyId: subscriberId
+            })
+          })
+        )
+          .then(() => {
+            req.flash('successMsg', '貼文上傳成功')
+            return res.redirect(`/profile/${req.user.id}`)
+          })
+          .catch(err => {
+            console.log('Error:', err)
+            next(err)
+          })
       }
-      broadcastNewPost({ postInfo })
-
-      req.flash('successMsg', '貼文上傳成功')
-      return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {
       console.log('ERROR:', err)
       next(err)
@@ -138,7 +157,60 @@ const postController = {
       console.log('Error:', err)
       next(err)
     }
-  }
+  },
+  addLike: async (req, res, next) => {
+    try {
+      const { postId } = req.params
+      const postInfo = await Post.findByPk(postId, {
+        attributes: ['userId', 'title'],
+        raw: true
+      })
+      await Promise.all([
+        Like.create({
+          postId,
+          userId: req.user.id
+        }),
+        Notice.create({
+          userId: req.user.id,
+          description: `按讚了你的貼文${postInfo.title}`,
+          postId,
+          isRead: false,
+          notifyId: postInfo.userId
+        })
+      ])
+      // await Like.create({
+      //   postId,
+      //   userId: req.user.id
+      // })
+      // await Notice.create({
+      //   userId: req.user.id,
+      //   description: '按讚了你的貼文',
+      //   postId,
+      //   isRead: false,
+      //   notifyId: postOwnerId
+      // })
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  removeLike: async (req, res, next) => {
+    try {
+      const { postId } = req.params
+      const like = await Like.findOne({
+        where: {
+          postId,
+          userId: req.user.id
+        }
+      })
+      await like.destroy()
+      return res.redirect('back')
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
 }
 
 module.exports = postController

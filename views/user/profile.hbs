@@ -34,7 +34,9 @@
               </button>
             </form>
           {{else}}
-            <button id="subscribeBtn" type="button" class="btn button button-b mt-3" user-id="{{profile.id}}"> Subscribe</button>
+            <form action="/subscribe/{{profile.id}}" method="post" class="d-inline">
+              <button type="submit" class="btn button button-b mt-3"> Subscribe</button>
+            </form>
           {{/if}}
         {{/ifCond}}
       </div>

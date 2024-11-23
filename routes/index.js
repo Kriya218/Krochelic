@@ -30,14 +30,15 @@ router.get('/posts/:id', postController.getPost)
 router.post('/comments', authenticated, commentController.postComment)
 router.delete('/comments/:id', authenticated, commentController.deleteComment)
 
-router.post('/like/:postId', authenticated, userController.addLike)
-router.delete('/like/:postId', authenticated, userController.removeLike)
+router.post('/like/:postId', authenticated, postController.addLike)
+router.delete('/like/:postId', authenticated, postController.removeLike)
 
 router.post('/following/:userId', authenticated, userController.addFollow)
 router.delete('/following/:userId', authenticated, userController.removeFollow)
 router.get('/followings/:userId', userController.getFollowings)
 router.get('/followers/:userId', userController.getFollowers)
 
+router.post('/subscribe/:subscribeId', authenticated, userController.addSubscribe)
 router.delete('/subscribe/:subscribeId', authenticated, userController.deleteSubscribe)
 
 router.get('/profile/:id/edit', authenticated, userController.editProfile)
