@@ -1,4 +1,3 @@
-const { where } = require('sequelize')
 const { Notice, User, Post, Like, Comment } = require('../models')
 
 const noticeController = {
@@ -33,7 +32,7 @@ const noticeController = {
         userInfo: usersInfoMap[notice.userId]
       }))
 
-      return res.render('notice', { notices: formattedNotices, signInUser })
+      return res.render('notice', { notices: formattedNotices, profileUser: signInUser })
     } catch (err) {
       console.log('Error:', err)
       next(err)

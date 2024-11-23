@@ -1,6 +1,6 @@
 const { User, Subscribeship, Notice } = require('../models')
 
-module.exports = (io) => {
+function setupWebSocket(io) {
   io.on('connection', async (socket) => {
     console.log('A user connected:', socket.id)
     try {
@@ -35,7 +35,6 @@ module.exports = (io) => {
             subscribeId,
             subscriberId: signInUserId
           })
-          // socket.join(subscribeId)
 
           const description = '訂閱了你的帳號'
           await Notice.create({
@@ -44,7 +43,6 @@ module.exports = (io) => {
             isRead: false,
             notifyId: subscribeId
           })
-          
 
           // if subscribe user online submit navbar update event
           const isSubscribeOnline = io.sockets.adapter.rooms.has(parseInt(subscribeId))
@@ -59,29 +57,6 @@ module.exports = (io) => {
           console.log('Error in subscribe event:', err)
         }
       })
-
-      // read notice
-      // socket.on('readNotice', async ({ userId }) => {
-      //   await Notice.update({ unread: false }, {
-      //     where: { userId }
-      //   })
-      // })
-      
-      // add user to subscribes room
-      // const subscriptions = await Subscribeship.findAll({
-      //   where: { subscriberId: signInUserId }
-      // })
-      // subscriptions.forEach(subscribe => {
-      //   socket.join(subscribe.subscribeId)
-      // })
-
-      
-
-      // subscribe user's post notice
-      // socket.on('newPost', data => {
-      //   console.log('Received post data:', data)
-      //   console.log('Received images:', images)
-      // })
       
     } catch (err) {
       console.log('Connection initialization error:', err)
@@ -89,3 +64,36 @@ module.exports = (io) => {
     }
   })
 }
+
+async function broadcastNewPost(postData) {
+  const { userId, postId, title } = postData.postInfo
+  const subscribeships = await Subscribeship.findAll({
+    where: { subscribeId: userId },
+    raw: true
+  })
+  if (subscribeships.length === 0) {
+    socket.emit('redirect', { url: `/profile/${signInUserId}` })
+  } else {
+    Promise.all(
+      subscribeships.map(subscribe => {
+        const subscriberId = subscribe.subscriberId
+        return Notice.create({
+          userId,
+          description: `發布了新貼文${title}`,
+          postId,
+          isRead: false,
+          notifyId: subscriberId
+        })
+      })
+    )
+      .then(() => {
+        socket.emit('redirect', { url: `/profile/${signInUserId}` })
+      })
+      .catch(err => {
+        console.log('Create notice err:', err)
+      })
+  }
+  
+}
+
+module.exports = { setupWebSocket, broadcastNewPost }

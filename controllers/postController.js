@@ -1,6 +1,6 @@
 const path = require('path')
 const { User, Post, Category, Image, Comment, Like } = require('../models')
-
+const { broadcastNewPost } = require('../controllers/websocketController')
 
 const postController = {
   home: (req, res, next) => {
@@ -81,6 +81,12 @@ const postController = {
         })
         await Image.bulkCreate(imageInfos)
       }
+      const postInfo = {
+        ...newPost.toJSON(),
+        postId: newPost.id,
+      }
+      broadcastNewPost({ postInfo })
+
       req.flash('successMsg', '貼文上傳成功')
       return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {

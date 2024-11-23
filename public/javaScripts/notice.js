@@ -5,32 +5,7 @@ socket.on('connect', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
-  // const form = document.getElementById('postForm')
-  // form.addEventListener('submit', evt => {
-  //   evt.preventDefault()
-  //   const formData = new FormData(form)
-  //   const data = {
-  //     title: formData.get('title'),
-  //     categoryId: formData.get('categoryId'),
-  //     content: formData.get('content')
-  //   }
-  //   const files = formData.getAll('images')
-  //   const images = []
-  //   files.forEach(file => {
-  //     const reader = new FileReader
-  //     reader.onload = () => {
-  //       images.push({
-  //         name: file.name,
-  //         type: file.type,
-  //         data: reader.result
-  //       })
-  //       if (images.length === file.length) {
-  //         socket.emit('newPost', { data, images })
-  //       }
-  //     }
-  //     reader.readAsDataURL(file)
-  //   })
-  // })
+
   const subscribeBtn = document.querySelector('#subscribeBtn')
   if (subscribeBtn) {
     subscribeBtn.addEventListener('click', function subscribeEmit(evt) {
@@ -42,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('updateNavBar', data => {
     const userId = document.querySelector('#userId').value
     const redDot = document.querySelector('#red-dot')
-    
+
     if (data.notifyId === parseInt(userId) && redDot) {
       redDot.classList.remove('d-none')
     }
@@ -54,3 +29,4 @@ socket.on('redirect', data => {
     window.location.href = data.url
   }
 })
+

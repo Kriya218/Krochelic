@@ -17,6 +17,7 @@ const app = express()
 const { Server } = require('socket.io')
 const server = require('http').createServer(app) 
 const io = new Server(server)
+const { setupWebSocket } = require('./controllers/websocketController')
 
 const routes = require ('./routes')
 const port = process.env.PORT || 3000
@@ -48,7 +49,8 @@ app.use((req, res, next) => {
 io.use((socket, next) => {
   sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
-require('./controllers/websocketController')(io)
+
+setupWebSocket(io)
 
 app.use(routes)
 
