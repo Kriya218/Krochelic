@@ -1,5 +1,6 @@
 const path = require('path')
 const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
+const { raw } = require('mysql2')
 
 const postController = {
   home: (req, res, next) => {
@@ -25,7 +26,7 @@ const postController = {
   },
   getPost: async (req, res, next) => {
     try {
-      const userId = parseInt(req.user?.id)
+      const signInUser = parseInt(req.user?.id)
       const postId = req.params.id
       const [postInfo, images, likes] = await Promise.all([
         Post.findByPk(postId, {
@@ -49,9 +50,10 @@ const postController = {
         }),
         Like.count({ where: {postId} })
       ])
-      const rawPostInfo = postInfo.toJSON()
-      const isLiked = userId ? !!(await Like.findOne({ where: { postId, userId }})) : false
-      return res.render('posts/post', { postInfo: rawPostInfo, images, isLiked, userId, likes })
+      const formatPostInfo = postInfo.toJSON()
+      const isLiked = signInUser ? !!(await Like.findOne({ where: { postId, userId: signInUser }})) : false
+      
+      return res.render('posts/post', { postInfo: formatPostInfo, images, isLiked, signInUser, likes })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -165,30 +167,22 @@ const postController = {
         attributes: ['userId', 'title'],
         raw: true
       })
-      await Promise.all([
-        Like.create({
-          postId,
-          userId: req.user.id
-        }),
-        Notice.create({
-          userId: req.user.id,
-          description: `按讚了你的貼文${postInfo.title}`,
-          postId,
-          isRead: false,
-          notifyId: postInfo.userId
-        })
-      ])
-      // await Like.create({
-      //   postId,
-      //   userId: req.user.id
-      // })
-      // await Notice.create({
-      //   userId: req.user.id,
-      //   description: '按讚了你的貼文',
-      //   postId,
-      //   isRead: false,
-      //   notifyId: postOwnerId
-      // })
+      const like = await Like.create({
+        postId,
+        userId: req.user.id
+      })
+      console.log('like:', like.id)
+      if (req.user.id === postInfo.userId) return
+      
+      await Notice.create({
+        userId: req.user.id,
+        description: `按讚了你的貼文${postInfo.title}`,
+        postId,
+        likeId: like.id,
+        isRead: false,
+        notifyId: postInfo.userId
+      })
+      
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
@@ -202,9 +196,13 @@ const postController = {
         where: {
           postId,
           userId: req.user.id
-        }
+        },
+        attributes: ['id'],
+        raw: true
       })
-      await like.destroy()
+      
+      await Notice.destroy({ where: { likeId: like.id } })
+      await Like.destroy({ where: { id: like.id } })
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)

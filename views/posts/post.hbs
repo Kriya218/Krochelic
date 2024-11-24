@@ -57,7 +57,7 @@
                 <div class="pe-1">
                   <a href="/profile/{{this.User.id}}" class="me-2">{{this.User.name}}</a>{{this.content}}
                 </div>
-                {{#ifCond ../userId ../postInfo.userId}}
+                {{#ifCond ../signInUser ../postInfo.userId}}
                 <div class="ms-auto">
                   <form action="/comments/{{this.id}}?_method=DELETE" method="post">
                       <input type="hidden" name="postId" value="{{this.id}}" />
@@ -90,7 +90,7 @@
               </form>
             {{/if}}
             <span>{{likes}} likes</span>
-            {{#ifCond postInfo.userId userId}}
+            {{#ifCond postInfo.userId signInUser}}
             <span class="ms-auto">
               <a href="/posts/{{postInfo.id}}/edit" class="me-3">
                 <i class="fa-regular fa-pen-to-square me-2"></i>Edit

@@ -1,16 +1,30 @@
-const { User, Comment } = require('../models')
+const { Comment, Post, Notice } = require('../models')
 const commentController = {
   postComment: async (req, res, next) => {
     try {
       const { content, postId } = req.body
-      console.log('content:', content)
+      const postInfo = await Post.findByPk(postId, {
+        attributes: ['userId'],
+        raw: true
+      })
       if (content === "") throw new Error('評論內容不可為空白')
-      await Comment.create({
+      const comment = await Comment.create({
         content,
         userId: req.user.id,
         postId
       })
+      
       req.flash('successMsg', '評論成功')
+
+      if (req.user.id === postInfo.userId) return res.redirect(`/posts/${postId}`)
+      Notice.create({
+        userId: req.user.id,
+        description: `評論了你的貼文: ${comment.content}`,
+        postId,
+        commentId: comment.id,
+        isRead: false,
+        notifyId: postInfo.userId
+      })
       return res.redirect(`/posts/${postId}`)
     } catch (err) {
       console.log('Error:', err)
