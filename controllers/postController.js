@@ -1,19 +1,36 @@
 const path = require('path') // don't delete
 const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
-
+const Op = require ('sequelize').Op 
+const { fn, col, literal } = require('sequelize')
 
 const postController = {
   feeds: async (req, res, next) => {
-    // like ship??
     try {
       const signInUser = req.user?.id
       const categoryId = Number(req.query.categoryId) || ''
+      const limit = 16
+      // let cursor = null
+      // const whereCond = cursor ? { createdAt: { [Op.lt]: cursor } } : {}
+      
       const categories = await Category.findAll({
         attributes:['id', 'name'],
         raw: true
       })
+      const likeIds = []
+      if (signInUser) {
+        await Like.findAll({
+          where: { userId: signInUser },
+          attributes: ['postId'],
+          raw: true
+        })
+          .then(likes => likes.map(like => likeIds.push(like.postId)))
+      }
+      
       const posts = await Post.findAll({
-        where: { ...categoryId ? { categoryId } : {} },
+        where: {
+          ...categoryId ? { categoryId } : {},
+          // ...whereCond
+        },
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
         include: [
           {
@@ -26,16 +43,29 @@ const postController = {
             raw: true
           }
         ],
-        limit: 12,
+        limit,
         order: [['createdAt', 'DESC']],
         nest: true
       })
+      // limit + 1
+      // const hasMore = posts.length > limit
+      // if (hasMore) posts.pop()
       const formatPosts = posts.map(post => ({
         ...post.toJSON(),
         image: post.Images[0].path,
+        isLiked: likeIds.includes(post.id)
       }))
+      // const nextCursor = formatPosts.length > 0 ? formatPosts[formatPosts.length - 1].createdAt : null
       
-      return res.render('feeds', { posts: formatPosts, signInUser, categories, categoryId })
+      return res.render('feeds', {
+        posts: formatPosts,
+        signInUser,
+        categories,
+        categoryId,
+        // nextCursor,
+        // hasMore,
+        // scrollSetting: { limit, cursor }
+      })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -84,6 +114,60 @@ const postController = {
       }))
       
       return res.render('home', { signInUser, posts: formatPosts })
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  popular: async (req, res, next) => {
+    try {
+      const signInUser = req.user?.id
+      const limit = 16
+      const populars = await Like.findAll({
+        attributes: [
+          'postId',
+          [fn('COUNT', col('post_id')), 'likeCount']
+        ],
+        group: ['postId'],
+        order: [[literal('likeCount'), 'DESC']],
+        limit,
+        raw: true
+      })
+
+      const postsIdArr = populars.map(popular => popular.postId)
+      const postsInfo = await Post.findAll({
+        where: { id: postsIdArr },
+        attributes: ['id', 'title', 'categoryId', 'userId'],
+        include: [
+          {
+            model: Image,
+            limit: 1
+          },
+          {
+            model: Category,
+            attributes: ['name']
+          },
+          {
+            model: Like,
+            attributes: ['userId']
+          }
+        ],
+        nest: true
+      })
+      
+      const formatPostInfo = postsInfo.map(info => ({
+        ...info.toJSON(),
+        image: info.Images[0].path,
+        isLiked: info.Likes.some(like => like.userId === signInUser),
+        likeCounts: info.Likes.length
+      }))
+      const postInfoMap = formatPostInfo.reduce((map, post) => {
+        map[post.id] = post
+        return map
+      }, {})
+      const sortedPostInfo = postsIdArr.map(id => postInfoMap[id])
+      
+      res.render('popular', { posts: sortedPostInfo, signInUser })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -248,7 +332,7 @@ const postController = {
         userId: req.user.id
       })
       console.log('like:', like.id)
-      if (req.user.id === postInfo.userId) return
+      if (req.user.id === postInfo.userId) return res.redirect('back')
       
       await Notice.create({
         userId: req.user.id,

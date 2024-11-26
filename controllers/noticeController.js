@@ -1,4 +1,4 @@
-const { Notice, User, Post, Like, Comment } = require('../models')
+const { Notice, User } = require('../models')
 
 const noticeController = {
   getNotice: async (req, res, next) => {

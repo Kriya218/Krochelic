@@ -1,0 +1,19 @@
+{{#if this.isLiked}}
+<form action="/like/{{this.id}}?_method=DELETE" method="post" class="ms-auto">
+  <button type="submit" class="text-button">
+    {{#if this.likeCounts}}
+      <span class="me-2">{{this.likeCounts}}</span>
+    {{/if}}
+    <i class="fa-solid fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+  </button>
+</form>
+{{else}}
+<form action="/like/{{this.id}}" method="post" class="ms-auto">
+  <button type="submit" class="text-button">
+    {{#if this.likeCounts}}
+      <span class="me-2">{{this.likeCounts}}</span>
+    {{/if}}
+    <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+  </button>
+</form>
+{{/if}}

@@ -1,6 +1,5 @@
 {{> nav}}
 <div class="container mb-3">
-
   <div class="d-flex flex-column">
     {{!-- navbar --}}
     <div class="navbar ms-5 ps-4">
@@ -33,26 +32,24 @@
         <a href="posts/{{this.id}}">
           <img src="{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
         </a>
-
         <div class="card-body">
           <h6 class="card-title"><a href="posts/{{this.id}}">{{this.title}}</a></h6>
           <div class="d-flex mt-4">
             <span class="btn button-b my-auto p-1" style="pointer-events: none; font-size: smaller;">{{this.Category.name}}</span>
-            
-            <form action="/like/{{this.id}}" method="post" class="ms-auto">
-              <button type="submit" class="text-button">
-                <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
-              </button>
-            </form>
+            {{#if ../signInUser}}
+              {{> likeButton}}
+            {{else}}
+              <form action="/like/{{this.id}}" method="post" class="ms-auto">
+                <button type="submit" class="text-button">
+                  <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+                </button>
+              </form>
+            {{/if}}
           </div>
         </div>
       </div>
       {{/each}}
-
     </div>
-
+    
   </div>
-
-</div>
-
 </div>

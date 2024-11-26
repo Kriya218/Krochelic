@@ -1,0 +1,35 @@
+{{> nav}}
+<div class="container my-3">
+  {{> messages}}
+  
+  {{!-- posts --}}
+  <div class="post-container row mt-3 d-flex gap-5 ps-5 ms-3">
+    {{#each posts}}
+    <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
+      <a href="posts/{{this.id}}">
+        <img src="{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
+      </a>
+      <div class="card-body">
+        <h6 class="card-title"><a href="posts/{{this.id}}">{{this.title}}</a></h6>
+        <div class="d-flex mt-4">
+          <span class="btn button-b my-auto p-1"
+            style="pointer-events: none; font-size: smaller;">{{this.Category.name}}
+          </span>
+          {{#if ../signInUser}}
+            {{> likeButton}}
+          {{else}}
+            <form action="/like/{{this.id}}" method="post" class="ms-auto">
+              <button type="submit" class="text-button">
+                {{#if this.likeCounts}}
+                  <span class="me-2">{{this.likeCounts}}</span>
+                {{/if}}
+                <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+              </button>
+            </form>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</div>

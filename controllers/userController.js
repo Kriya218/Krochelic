@@ -1,4 +1,4 @@
-const { User, Post, Image, Like, Followship, Subscribeship, Notice } = require('../models')
+const { User, Post, Image, Followship, Subscribeship, Notice } = require('../models')
 const bcrypt = require('bcryptjs')
 const { fn, col } = require('sequelize')
 const path = require('path')
@@ -64,7 +64,6 @@ const userController = {
         })
       }
       
-
       if (!profile) {
         req.flash('errMsg', '用戶不存在')
         return res.redirect('back')

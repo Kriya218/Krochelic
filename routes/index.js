@@ -21,6 +21,7 @@ router.get('/oauth/redirect/google', passport.authenticate('google', {
 router.get('/logout', userController.logout)
 
 router.get('/home/:userId', authenticated, postController.home)
+router.get('/popular', postController.popular)
 
 router.get('/posts/:id/edit', authenticated, postController.editPost)
 router.put('/posts/:id', authenticated, postController.putPost)
