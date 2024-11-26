@@ -20,6 +20,8 @@ router.get('/oauth/redirect/google', passport.authenticate('google', {
 }), userController.signIn)
 router.get('/logout', userController.logout)
 
+router.get('/home/:userId', authenticated, postController.home)
+
 router.get('/posts/:id/edit', authenticated, postController.editPost)
 router.put('/posts/:id', authenticated, postController.putPost)
 router.delete('/posts/:id', authenticated, postController.deletePost)
@@ -47,10 +49,10 @@ router.get('/profile/:id', userController.profile)
 
 router.get('/notice/:userId', authenticated, noticeController.getNotice)
 
-router.get('/', postController.home)
+router.get('/feeds', postController.feeds)
 
 
-router.get('/', (req, res) => res.redirect('/'))
+router.get('/', (req, res) => res.redirect('/feeds'))
 
 router.use('/', generalErrorHandler)
 

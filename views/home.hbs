@@ -1,73 +1,42 @@
 {{> nav}}
-  <div class="container mb-3">
-
-    <div class="d-flex flex-column">
-      {{!-- navbar --}}
-      <div class="navbar ms-4 me-2">
-        <ul class="nav nav-underline">
-          <li class="nav-item">
-            <a class="nav-link" href="/">Feeds</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/following">Following</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/popular">Popular</a>
-          </li>
-        </ul>
-      
-        <div class="ms-auto col-md-3 my-3">
-          <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" placeholder="搜尋" aria-label="Search">
-            <button class="btn button button-b" type="submit">Search</button>
-          </form>
-        </div>
-      </div>
-
-      {{> messages}}
-      
-      <div class="ms-3">
-        <hr>
-        <ul class="nav nav-pills">
-          <li class="nav-item">
-            <a class="nav-link active" href="/posts/feeds">All</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/following">Beginner</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/popular">Hat</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/popular">Scarf</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/posts/popular">Bag</a>
-          </li>
-        </ul>
-      </div>
-
-      {{!-- posts --}}
-      <div class="post-container row mt-3 d-flex gap-4 ps-4">
-        {{!-- {{#each posts}} --}}
-        <div class="card" style="width: 18rem; padding: 0;">
-          <a href="posts/{{this.id}}">
-            <img src="/images/yarn.png" class="card-img-top" style="height: 230px; object-fit:cover;" alt="post image">
+  <div class="container my-3">
+    {{> messages}}
+    
+    {{!-- posts --}}
+    <div class="post-container row mt-3 d-flex gap-5 ps-5 mx-auto">
+      {{#each posts}}
+        <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
+          <a href="/posts/{{this.id}}">
+            <img src="/{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
           </a>
-          
+        
           <div class="card-body">
-            <h5 class="card-title"><a href="posts/{{this.id}}">Card title</a></h5>
-            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.
-            </p>
-            <i class="fa-regular fa-heart fa-xl float-end me-2 mt-3" style="color: #ED6D46;"></i>
+            <strong class="card-title"><a href="/posts/{{this.id}}" style="color: black;">{{this.title}}</a></strong>
+            <div class="d-flex mt-4 align-items-center" style="font-size: smaller;">
+              <span>
+                <img src="{{pathCheck this.User.image}}" class="profile-img me-2" style="width: 20px;" alt="profile photo">
+              </span>
+              <a href="/profile/{{this.userId}}">{{this.User.name}}</a>
+        
+              {{#if this.isLiked}}
+                <form action="/like/{{this.id}}?_method=DELETE" method="post" class="ms-auto">
+                  <button type="submit" class="text-button">
+                    <i class="fa-solid fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+                  </button>
+                </form>
+              {{else}}
+                <form action="/like/{{this.id}}" method="post" class="ms-auto">
+                  <button type="submit" class="text-button">
+                    <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+                  </button>
+                </form>
+              {{/if}}
+            </div>
           </div>
         </div>
-        {{!-- {{/each}} --}}
-
-      </div>
-
+      {{/each}}
     </div>
-
   </div>
-
 </div>
+
+

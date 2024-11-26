@@ -1,0 +1,58 @@
+{{> nav}}
+<div class="container mb-3">
+
+  <div class="d-flex flex-column">
+    {{!-- navbar --}}
+    <div class="navbar ms-5 ps-4">
+      <ul class="nav nav-underline" style="font-size: larger;">
+        <li class="nav-item">
+          <a class="nav-link {{#ifCond '' categoryId}}active{{/ifCond}}" href="?categoryId=">All</a>
+        </li>
+        {{#each categories}}
+          <li class="nav-item">
+            <a class="nav-link {{#ifCond this.id ../categoryId}}active{{/ifCond}}" href="?categoryId={{this.id}}">{{this.name}}</a>
+          </li>
+        {{/each}}
+      </ul>
+
+      {{!-- search-bar --}}
+      <div class="ms-auto col-md-3 my-3 pe-5 me-4">
+        <form class="d-flex" role="search">
+          <input class="form-control me-2" type="search" placeholder="搜尋" aria-label="Search">
+          <button class="btn button button-b" type="submit">Search</button>
+        </form>
+      </div>
+    </div>
+
+    {{> messages}}
+
+    {{!-- posts --}}
+    <div class="post-container row mt-3 d-flex gap-5 ps-5 ms-3">
+      {{#each posts}}
+      <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
+        <a href="posts/{{this.id}}">
+          <img src="{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
+        </a>
+
+        <div class="card-body">
+          <h6 class="card-title"><a href="posts/{{this.id}}">{{this.title}}</a></h6>
+          <div class="d-flex mt-4">
+            <span class="btn button-b my-auto p-1" style="pointer-events: none; font-size: smaller;">{{this.Category.name}}</span>
+            
+            <form action="/like/{{this.id}}" method="post" class="ms-auto">
+              <button type="submit" class="text-button">
+                <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>

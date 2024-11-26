@@ -32,7 +32,7 @@ const userController = {
   },
   signIn: (req, res, next) => {
     req.flash('successMsg', '登入成功')
-    return res.redirect('/')
+    return res.redirect(`/home/${req.user.id}`)
   },
   logout: (req, res) => {
     req.logout(err => {

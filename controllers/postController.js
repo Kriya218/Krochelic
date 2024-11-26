@@ -1,13 +1,89 @@
-const path = require('path')
+const path = require('path') // don't delete
 const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
-const { raw } = require('mysql2')
+
 
 const postController = {
-  home: (req, res, next) => {
+  feeds: async (req, res, next) => {
+    // like ship??
     try {
       const signInUser = req.user?.id
-      console.log('singInUser:', signInUser)
-      return res.render('home', { signInUser })
+      const categoryId = Number(req.query.categoryId) || ''
+      const categories = await Category.findAll({
+        attributes:['id', 'name'],
+        raw: true
+      })
+      const posts = await Post.findAll({
+        where: { ...categoryId ? { categoryId } : {} },
+        attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
+        include: [
+          {
+            model: Image,
+            limit: 1
+          },
+          {
+            model: Category,
+            attributes: ['name'],
+            raw: true
+          }
+        ],
+        limit: 12,
+        order: [['createdAt', 'DESC']],
+        nest: true
+      })
+      const formatPosts = posts.map(post => ({
+        ...post.toJSON(),
+        image: post.Images[0].path,
+      }))
+      
+      return res.render('feeds', { posts: formatPosts, signInUser, categories, categoryId })
+    } catch (err) {
+      console.log('Error:', err)
+      next(err)
+    }
+  },
+  home: async (req, res, next) => {
+    try {
+      const signInUser = req.user.id
+      if (signInUser !== Number(req.params.userId)) {
+        req.flash('errMsg', '無檢視權限')
+        return res.redirect('back')
+      }
+      
+      const subscribes = await Subscribeship.findAll({
+        where: { subscriberId: signInUser },
+        attributes: ['subscribeId'],
+        raw: true
+      }).then(subs => subs.map(sub => sub.subscribeId))
+
+      const posts = await Post.findAll({
+        where: { userId: subscribes },
+        attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
+        include: [
+          {
+            model: Image,
+            limit: 1
+          },
+          {
+            model: User,
+            attributes: ['id', 'name', 'image'],
+          },
+          {
+            model: Like,
+            whee: { userId: signInUser },
+            attributes: ['userId'],
+          }
+        ],
+        limit: 12,
+        order: [['createdAt', 'DESC']],
+        nest: true
+      })
+      const formatPosts = posts.map(post => ({
+        ...post.toJSON(),
+        image: post.Images[0].path,
+        isLiked: post.Likes.some(like => like.userId === signInUser)
+      }))
+      
+      return res.render('home', { signInUser, posts: formatPosts })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -26,7 +102,7 @@ const postController = {
   },
   getPost: async (req, res, next) => {
     try {
-      const signInUser = parseInt(req.user?.id)
+      const signInUser = Number(req.user?.id)
       const postId = req.params.id
       const [postInfo, images, likes] = await Promise.all([
         Post.findByPk(postId, {

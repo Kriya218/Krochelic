@@ -3,7 +3,16 @@
     <a href="/"><img src="/images/logo.png" class="mt-5 ms-3" alt="logo" width="65%"></a>
     <ul class="nav flex-column mt-4">
       <li class="nav-item mb-3">
-        <a class="nav-link" aria-current="page" href="/"><i class="fa-solid fa-house me-2"></i>Home</a>
+        {{#if signInUser}}
+          <a class="nav-link" aria-current="page" href="/home/{{signInUser}}">
+            <i class="fa-solid fa-house me-2"></i>Home
+          </a>
+        {{else}}
+          <a class="nav-link" aria-current="page" href="/signin">
+            <i class="fa-solid fa-house me-2"></i>Home
+          </a>
+        {{/if}}
+        
       </li>
       <li class="nav-item mb-3">
         {{#if signInUser}}
@@ -15,6 +24,15 @@
           <a class="nav-link" aria-current="page" href="/signin"><i class="fa-regular fa-bell me-2" id="notice-icon"></i>Notice</a>
         {{/if}}
       </li>
+
+      <li class="nav-item mb-3">
+        <a class="nav-link" href="/feeds"><i class="fa-regular fa-compass me-2"></i>Feeds</a>
+      </li>
+
+      <li class="nav-item mb-3">
+        <a class="nav-link" href="/popular"><i class="fa-solid fa-fire me-2"></i>Popular</a>
+      </li>
+
       <li class="nav-item mb-3">
         <a class="nav-link" href="/posts/create"><i class="fa-solid fa-plus me-2"></i>Create Post</a>
       </li>
