@@ -16,8 +16,9 @@
 
       {{!-- search-bar --}}
       <div class="ms-auto col-md-3 my-3 pe-5 me-4">
-        <form class="d-flex" role="search">
-          <input class="form-control me-2" type="search" placeholder="搜尋" aria-label="Search">
+        <form action="/feeds" class="d-flex" role="search">
+          <input type="hidden" name="categoryId" value="{{categoryId}}">
+          <input class="form-control me-2" type="search" name="keywords" placeholder="keywords" aria-label="Search">
           <button class="btn button button-b" type="submit">Search</button>
         </form>
       </div>
@@ -27,29 +28,60 @@
 
     {{!-- posts --}}
     <div class="post-container row mt-3 d-flex gap-5 ps-5 ms-3">
-      {{#each posts}}
-      <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
-        <a href="posts/{{this.id}}">
-          <img src="{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
-        </a>
-        <div class="card-body">
-          <h6 class="card-title"><a href="posts/{{this.id}}">{{this.title}}</a></h6>
-          <div class="d-flex mt-4">
-            <span class="btn button-b my-auto p-1" style="pointer-events: none; font-size: smaller;">{{this.Category.name}}</span>
-            {{#if ../signInUser}}
+      {{#ifCond posts 'Not found'}}
+        <div class="d-flex justify-content-center ps-0 my-5">
+          搜尋無結果，請輸入其他關鍵字
+        </div>
+      {{else}}
+        {{#each posts}}
+        <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
+          <a href="posts/{{this.id}}">
+            <img src="{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
+          </a>
+          <div class="card-body">
+            <h6 class="card-title"><a href="posts/{{this.id}}">{{this.title}}</a></h6>
+            <div class="d-flex mt-4">
+              <span class="btn button-b my-auto p-1"
+                style="pointer-events: none; font-size: smaller;">{{this.Category.name}}</span>
+              {{#if ../signInUser}}
               {{> likeButton}}
-            {{else}}
+              {{else}}
               <form action="/like/{{this.id}}" method="post" class="ms-auto">
                 <button type="submit" class="text-button">
                   <i class="fa-regular fa-heart fa-xl me-2 mt-3" style="color: #ED6D46;"></i>
                 </button>
               </form>
-            {{/if}}
+              {{/if}}
+            </div>
           </div>
         </div>
-      </div>
-      {{/each}}
+        {{/each}}
+      {{/ifCond}}
+      
     </div>
-    
   </div>
+
+  {{!-- pagination --}}
+  <div class="d-flex justify-content-center my-5">
+    <nav aria-label="Page navigation">
+      <ul class="pagination">
+        <li class="page-item" {{#ifCond pagination.currentPage 1}}disabled{{/ifCond}}>
+          <a class="page-link" href="/feeds?page={{pagination.prev}}&categoryId={{categoryId}}" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        {{#each pagination.pages}}
+        <li class="page-item {{#ifCond ../pagination.currentPage this}}active{{/ifCond}}">
+          <a class="page-link" href="/feeds?page={{this}}&categoryId={{../categoryId}}">{{this}}</a>
+        </li>
+        {{/each}}
+        <li class="page-item" {{#ifCond pagination.currentPage totalPage}}disabled{{/ifCond}}>
+          <a class="page-link" href="/feeds?page={{pagination.next}}&categoryId={{categoryId}}" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
 </div>

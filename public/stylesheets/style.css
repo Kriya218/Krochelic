@@ -88,3 +88,9 @@ ul {
   background-color: red;
   border-radius: 50%;
 }
+
+ul.pagination .page-item.active .page-link {
+  background-color: #ED6D46;
+  border-color: #ED6D46;
+  color: white !important;
+}

@@ -2,16 +2,23 @@ const path = require('path') // don't delete
 const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
 const Op = require ('sequelize').Op 
 const { fn, col, literal } = require('sequelize')
+const { getOffset, getPagination } = require('../helpers/paginationHelpers')
 
 const postController = {
   feeds: async (req, res, next) => {
     try {
       const signInUser = req.user?.id
       const categoryId = Number(req.query.categoryId) || ''
+      const page = Number(req.query.page) || 1
       const limit = 16
-      // let cursor = null
-      // const whereCond = cursor ? { createdAt: { [Op.lt]: cursor } } : {}
-      
+      const offset = getOffset(limit, page)
+      const keywords = req.query.keywords?.replace(/\s+/g,'').toLowerCase()
+      const search = keywords ? {
+        [Op.or]: [
+          { title: { [Op.like]: `%${keywords}%`} },
+          { content: { [Op.like]: `%${keywords}%`} },
+        ]
+      } : {}
       const categories = await Category.findAll({
         attributes:['id', 'name'],
         raw: true
@@ -27,9 +34,9 @@ const postController = {
       }
       
       const posts = await Post.findAll({
-        where: {
+        where: { 
           ...categoryId ? { categoryId } : {},
-          // ...whereCond
+          ...keywords ? search : {}
         },
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
         include: [
@@ -44,27 +51,34 @@ const postController = {
           }
         ],
         limit,
+        offset,
         order: [['createdAt', 'DESC']],
         nest: true
       })
-      // limit + 1
-      // const hasMore = posts.length > limit
-      // if (hasMore) posts.pop()
-      const formatPosts = posts.map(post => ({
-        ...post.toJSON(),
-        image: post.Images[0].path,
-        isLiked: likeIds.includes(post.id)
-      }))
-      // const nextCursor = formatPosts.length > 0 ? formatPosts[formatPosts.length - 1].createdAt : null
+      const postCounts = await Post.count({where: { ...categoryId ? { categoryId } : {} }})
+      // const formatPosts = posts.map(post => ({
+      //   ...post.toJSON(),
+      //   image: post.Images[0].path,
+      //   isLiked: likeIds.includes(post.id)
+      // }))
       
+      let postsResult
+      if (keywords && posts.length === 0) {
+        postsResult = 'Not found'
+      } else {
+        postsResult = posts.map(post => ({
+          ...post.toJSON(),
+          image: post.Images[0].path,
+          isLiked: likeIds.includes(post.id)
+        }))
+      }
+
       return res.render('feeds', {
-        posts: formatPosts,
+        posts: postsResult,
         signInUser,
         categories,
         categoryId,
-        // nextCursor,
-        // hasMore,
-        // scrollSetting: { limit, cursor }
+        pagination: getPagination(limit, page, postCounts)
       })
     } catch (err) {
       console.log('Error:', err)
@@ -122,7 +136,7 @@ const postController = {
   popular: async (req, res, next) => {
     try {
       const signInUser = req.user?.id
-      const limit = 16
+      const limit = 20
       const populars = await Like.findAll({
         attributes: [
           'postId',
