@@ -2,9 +2,10 @@
   "development": {
     "username": "root",
     "password": "password",
-    "database": "krochelic",
-    "host": "127.0.0.1",
+    "database": "krochelic_docker",
+    "host": "db",
     "dialect": "mysql",
+    "port": 3306,
     "timezone": "+08:00"
   },
   "test": {

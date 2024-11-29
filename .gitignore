@@ -3,3 +3,5 @@ temp/
 upload/
 .DS_Store
 .env
+data/
+.dockerignore
