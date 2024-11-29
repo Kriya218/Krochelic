@@ -9,5 +9,5 @@ echo "Running database migrations..."
 npx sequelize db:migrate
 
 echo "Starting Express app"
-export NODE_ENV=development
+# export NODE_ENV=development
 npm start
