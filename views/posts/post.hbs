@@ -11,7 +11,7 @@
             <div class="carousel-inner d-flex align-items-center" style="height: 100%;">
               {{#each images}}
               <div class="carousel-item {{#if @first}}active{{/if}}">
-                <img src="/{{this.path}}" class="d-block w-100" style="height: 100%; object-fit: cover;"
+                <img src="{{pathCheck this.path}}" class="d-block w-100" style="height: 100%; object-fit: cover;"
                   alt="Image {{@index}}">
               </div>
               {{/each}}

@@ -7,7 +7,7 @@ echo "Starting entrypoint.sh..."
 # 執行 Sequelize 資料庫遷移
 echo "Running database migrations..."
 npx sequelize db:migrate
-
+npx sequelize db:seed:all
 echo "Starting Express app"
 # export NODE_ENV=development
 npm start

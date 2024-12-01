@@ -7,7 +7,7 @@
       {{#each posts}}
         <div class="card" style="width: 15rem; height: 18rem; padding: 0;">
           <a href="/posts/{{this.id}}">
-            <img src="/{{this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
+            <img src="{{pathCheck this.image}}" class="card-img-top" style="height: 180px; object-fit:cover;" alt="post image">
           </a>
         
           <div class="card-body">

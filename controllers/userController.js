@@ -72,15 +72,11 @@ const userController = {
         where: { userId: profileId },
         include: [{
           model: Image,
-          attributes: []
+          attributes: ['path', 'postId'],
+          limit: 1
         }],
-        attributes: [
-          'id',
-          [fn('GROUP_CONCAT', col('Images.path')), 'images']
-        ],        
-        group: ['Post.id'],
+        attributes: ['id'],
         order: [['createdAt', 'DESC']],
-        raw: true,
         nest: true
       })
       const profileInfo = {
@@ -91,13 +87,13 @@ const userController = {
         isFollowing: profile.Followers.map(f => f.id).includes(parseInt(signInUser)),
         isSubscribe: subscribeShip ? true : false
       } 
-      postsInfo.forEach(post => {
-        post.images = post.images ? post.images.split(',') : []
-      })
-
+      const formatPostInfo = postsInfo.map(info => ({
+        ...info.toJSON(),
+        image: info.Images[0].path
+      }))
       return res.render('user/profile', { 
         profile : profileInfo,
-        postsInfo,
+        posts: formatPostInfo,
         profileId,
         signInUser
       })

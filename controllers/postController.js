@@ -56,11 +56,6 @@ const postController = {
         nest: true
       })
       const postCounts = await Post.count({where: { ...categoryId ? { categoryId } : {} }})
-      // const formatPosts = posts.map(post => ({
-      //   ...post.toJSON(),
-      //   image: post.Images[0].path,
-      //   isLiked: likeIds.includes(post.id)
-      // }))
       
       let postsResult
       if (keywords && posts.length === 0) {
@@ -147,7 +142,6 @@ const postController = {
         limit,
         raw: true
       })
-
       const postsIdArr = populars.map(popular => popular.postId)
       const postsInfo = await Post.findAll({
         where: { id: postsIdArr },
@@ -168,7 +162,6 @@ const postController = {
         ],
         nest: true
       })
-      
       const formatPostInfo = postsInfo.map(info => ({
         ...info.toJSON(),
         image: info.Images[0].path,
@@ -180,7 +173,6 @@ const postController = {
         return map
       }, {})
       const sortedPostInfo = postsIdArr.map(id => postInfoMap[id])
-      
       res.render('popular', { posts: sortedPostInfo, signInUser })
     } catch (err) {
       console.log('Error:', err)
@@ -261,7 +253,10 @@ const postController = {
         })
         await Image.bulkCreate(imageInfos)
       }
-      
+      if (subscribeships.length === 0) {
+        req.flash('successMsg', '貼文上傳成功')
+        return res.redirect(`/profile/${req.user.id}`)
+      }
       if (subscribeships.length > 0) {
         await Promise.all(
           subscribeships.map(subscribe => {
