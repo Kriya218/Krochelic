@@ -34,10 +34,12 @@ const commentController = {
   deleteComment: async (req, res, next) => {
     try {
       const { postId } = req.body
-      const comment = await Comment.findByPk(postId)
+      const commentId = req.params.id
+      const comment = await Comment.findByPk(commentId)
       await comment.destroy()
+      console.log('postId:', postId)
       req.flash('successMsg', '評論已刪除')
-      return res.redirect(`/posts/${postId}`)
+      return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
       next(err)

@@ -203,7 +203,8 @@ const postController = {
             {
               model: Comment,
               attributes: ['id', 'content', 'userId'],
-              include: [{ model: User, attributes: ['id','name', 'image'] }]
+              include: [{ model: User, attributes: ['id','name', 'image'] }],
+              required: false
             }
           ],
           order: [[{ model: Comment }, 'createdAt', 'DESC']],
@@ -216,6 +217,10 @@ const postController = {
         }),
         Like.count({ where: {postId} })
       ])
+      if (!postInfo) {
+        const err = new Error('貼文不存在')
+        return next(err)
+      }
       const formatPostInfo = postInfo.toJSON()
       const isLiked = signInUser ? !!(await Like.findOne({ where: { postId, userId: signInUser }})) : false
       
