@@ -4,32 +4,24 @@ const noticeController = {
   getNotice: async (req, res, next) => {
     try {
       const signInUser = req.user?.id
-      const userId = parseInt(req.params.userId)
+      const notifyUserId = parseInt(req.params.notifyUserId)
       if (!signInUser) throw new Error('請先登入')
-      if (userId !== signInUser) throw new Error('無檢視通知權限')
+      if (notifyUserId !== signInUser) throw new Error('無檢視通知權限')
       const notices = await Notice.findAll({
-        where: { notifyId: userId, isRead: false },
+        where: { notifyId: signInUser, isRead: false },
+        include: [{ 
+          model: User,
+          attributes: ['name', 'image']
+        }],
         order: [['createdAt', 'DESC']],
-        raw: true
+        nest: true
       })
-      await Notice.update({ isRead: true },{
-        where: { notifyId: userId, isRead: false } 
+      Notice.update({ isRead: true }, {
+        where: { notifyId: signInUser, isRead: false } 
       })
-      
-      const noticeUserIds = [...new Set(notices.map(notice => notice.userId))]
-      const users = await User.findAll({
-        where: { id: noticeUserIds },
-        attributes: ['id', 'name', 'image'],
-        raw: true
-      })
-      const usersInfoMap = users.reduce((map, user) => {
-        map[user.id] = user
-        return map
-      }, {})
       
       const formattedNotices = notices.map(notice => ({
-        ...notice,
-        userInfo: usersInfoMap[notice.userId]
+        ...notice.toJSON()
       }))
 
       return res.render('notice', { notices: formattedNotices, signInUser })

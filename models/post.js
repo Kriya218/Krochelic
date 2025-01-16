@@ -31,7 +31,11 @@ module.exports = (sequelize, DataTypes) => {
     content: DataTypes.TEXT,
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
     }
   }, {
     sequelize,

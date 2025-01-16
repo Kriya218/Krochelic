@@ -4,7 +4,8 @@ const fileFilter = (req, file, next) => {
   try {
     const ext = path.extname(file.originalname)
     if (!/\.jpg|\.jpeg|\.png$/i.test(ext)) {
-      return next(new Error('僅限上傳.jpg、.jpeg、.png 格式檔案'))
+      req.flash('errMsg', '僅限上傳.jpg、.jpeg、.png 格式檔案')
+      return next()
     }
     next(null, true)
   } catch (err) {

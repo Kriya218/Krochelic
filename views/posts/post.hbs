@@ -54,11 +54,11 @@
                 <span>
                   <img src="{{pathCheck this.User.image}}" class="profile-img me-3" style="width: 40px;" alt="profile photo">
                 </span>
-                <div class="pe-1">
+                <div class="pe-1 d-flex align-items-center">
                   <a href="/profile/{{this.User.id}}" class="me-2">{{this.User.name}}</a>{{this.content}}
                 </div>
                 {{#ifCond ../signInUser ../postInfo.userId}}
-                <div class="ms-auto">
+                <div class="ms-auto d-flex align-items-center">
                   <form action="/comments/{{this.id}}?_method=DELETE" method="post">
                       <input type="hidden" name="postId" value="{{this.id}}" />
                       <button type="submit" class="text-button" style="color: grey; font-size:smaller;">

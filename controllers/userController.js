@@ -1,8 +1,8 @@
 const { User, Post, Image, Followship, Subscribeship, Notice } = require('../models')
 const bcrypt = require('bcryptjs')
-const { fn, col } = require('sequelize')
 const path = require('path')
-
+const redisClient = require('../config/redis')
+const { fileHandler } = require('../helpers/file-helper')
 
 const userController = {
   signUpPage: (req, res) => {
@@ -44,62 +44,54 @@ const userController = {
   profile: async(req, res, next) => {
     try {
       const signInUser = req.user?.id
-      const profileId = parseInt(req.params?.id)
-      const profile = await User.findByPk(profileId , {
+      const profileId = Number(req.params?.id)
+      const profileInfos = await User.findByPk(profileId , {
         attributes:['id', 'name', 'image'],
         include: [
-          { model: User, as: 'Followers', attributes: ['id', 'name', 'image'] },
-          { model: User, as: 'Followings', attributes: ['id', 'name', 'image'] }
+          { model: User, as: 'Followers', attributes: ['id'] },
+          { 
+            model: Post,
+            attributes: ['id'],
+            as: 'Posts',
+            include: [{
+              model: Image,
+              attributes: ['path'],
+              limit: 1
+            }],
+            nest: true
+          },
         ],
+        order: [[{ model: Post, as: 'Posts' }, 'createdAt', 'DESC']],
         nest: true
       })
-      let subscribeShip
-      if (signInUser) {
-        subscribeShip = await Subscribeship.findOne({ 
+      if (profileInfos.length === 0) throw new Error('用戶不存在')
+      const profileUserFollowingIds = await redisClient.sMembers(`user:${profileId}:followings`)
+      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
+
+      const subscribeShip = signInUser ? await Subscribeship.findOne({ 
           where: { 
             subscriberId: signInUser,
             subscribeId: profileId
           },
           raw: true
-        })
-      }
-      
-      if (!profile) {
-        req.flash('errMsg', '用戶不存在')
-        return res.redirect('back')
-      }
-      const postsInfo = await Post.findAll({
-        where: { userId: profileId },
-        include: [{
-          model: Image,
-          attributes: ['path', 'postId'],
-          limit: 1
-        }],
-        attributes: ['id'],
-        order: [['createdAt', 'DESC']],
-        nest: true
-      })
-      const profileInfo = {
-        ...profile.toJSON(),
-        postsCount: postsInfo.length,
-        followersCount: profile.Followers.length,
-        followingsCount: profile.Followings.length,
-        isFollowing: profile.Followers.map(f => f.id).includes(parseInt(signInUser)),
+        }) : []
+      const formatProfileInfo = {
+        ...profileInfos.toJSON(),
+        postsCount: profileInfos.Posts.length,
+        postInfos: profileInfos.Posts.map(image => ({ id: image.id, path: image.Images[0].path })),
+        followersCount: profileInfos.Followers.length,
+        followingsCount: profileUserFollowingIds.length,
+        isFollowing: signInUserFollowingIds.includes(profileId.toString()),
         isSubscribe: subscribeShip ? true : false
-      } 
-      const formatPostInfo = postsInfo.map(info => ({
-        ...info.toJSON(),
-        image: info.Images[0].path
-      }))
+      }
       return res.render('user/profile', { 
-        profile : profileInfo,
-        posts: formatPostInfo,
+        profile: formatProfileInfo,
         profileId,
         signInUser
       })
     } catch (err) {
       console.log('Error:', err)
-      next(err)
+      return next(err)
     }
   },
   editProfile: async (req, res, next) => {
@@ -119,10 +111,13 @@ const userController = {
   putProfile: async (req, res, next) => {
     try {
       const { name } = req.body
-      const file = req.file
-      console.log("file:", req.file)
-      const filePath = file ? path.posix.join('upload', file.filename) : null
-      const profileInfo = await User.findByPk(req.user.id)
+      const { file } = req
+      const [filePath, profileInfo] = await Promise.all([
+        fileHandler(file),
+        User.findByPk(req.user.id)
+      ])
+
+      if (!profileInfo) throw new Error('用戶不存在')
       await profileInfo.update({
         name,
         image: filePath || profileInfo.image
@@ -136,14 +131,19 @@ const userController = {
   },
   addFollow: async (req, res, next) => {
     try {
+      const signInUser = req.user?.id
       const { userId } = req.params
       const followship = await Followship.findOne({
-        where: { followerId: req.user.id, followingId: userId }
+        where: { followerId: signInUser, followingId: userId }
       })
       if (followship) throw new Error('已追蹤此使用者')
       await Followship.create({
         followingId: userId, 
-        followerId: req.user.id
+        followerId: signInUser
+      })
+      await redisClient.sAdd(`user:${signInUser}:followings`, userId, (err, res) => {
+        if (err) return next(err)
+        console.log('Add followings to cache:', res)
       })
       return res.redirect('back')
     } catch (err) {
@@ -153,12 +153,17 @@ const userController = {
   },
   removeFollow: async (req, res, next) => {
     try {
+      const signInUser = req.user?.id
       const { userId } = req.params
       const followship = await Followship.findOne({
-        where: { followerId: req.user.id, followingId: userId }
+        where: { followerId: signInUser, followingId: userId }
       })
       if (!followship) throw new Error('尚未追蹤此使用者')
       await followship.destroy()
+      await redisClient.sRem(`user:${signInUser}:followings`, userId, (err, res) => {
+        if (err) return next(err)
+        console.log('Remove following from cache:', res)
+      })
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
@@ -168,8 +173,10 @@ const userController = {
   getFollowings: async (req, res, next) => {
     try {
       const signInUser = req.user?.id 
-      const profileUser = req.params.userId
-      const followingInfo = await User.findByPk(profileUser, {
+      const profileId = req.params.userId
+      if (!profileId) throw new Error('用戶不存在')
+      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
+      const followingInfo = await User.findByPk(profileId, {
         include: [{
           model: User,
           as: 'Followings',
@@ -177,20 +184,12 @@ const userController = {
         }],
         nest: true
       })
-      let userFollowArr = []
-      if (signInUser) {
-        const userFollowInfo = await User.findByPk(signInUser, {
-          attributes: [],
-          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
-          nest: true
-        })
-        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
-      }
+      
       const followings = followingInfo?.toJSON().Followings.map(f => ({
         ...f,
-        isFollowing: userFollowArr.includes(f.id)
+        isFollowing: signInUserFollowingIds.includes((f.id).toString())
       }))
-      return res.render('user/followings', { followings, signInUser, profileUser })
+      return res.render('user/followings', { followings, signInUser, profileId })
     } catch (err) {
       console.log('Error:', err)
       next(err)
@@ -200,6 +199,8 @@ const userController = {
     try {
       const signInUser = req.user?.id 
       const profileUser = req.params.userId
+      if (!profileUser) throw new Error('用戶不存在')
+      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : [] 
       const followerInfo = await User.findByPk(profileUser, {
         include: [{
           model: User,
@@ -208,19 +209,10 @@ const userController = {
         }],
         nest: true
       })
-
-      let userFollowArr = []
-      if (signInUser) {
-        const userFollowInfo = await User.findByPk(signInUser, {
-          attributes: [],
-          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
-          nest: true
-        })
-        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
-      }
+      
       const followers = followerInfo?.toJSON().Followers.map(f => ({
         ...f,
-        isFollowing: userFollowArr.includes(f.id)
+        isFollowing: signInUserFollowingIds.includes((f.id).toString())
       }))
       return res.render('user/followers', { followers, signInUser, profileUser })
     } catch (err) {
@@ -231,23 +223,27 @@ const userController = {
   addSubscribe: async (req, res, next) => {
     try {
       const { subscribeId } = req.params
-      
-      const subscribeShip = await Subscribeship.findOne({
-        where: { subscribeId, subscriberId: req.user.id }
-      })
-      if (subscribeShip) throw new Error('已訂閱此作者')
-      await Subscribeship.create({
-        subscribeId,
-        subscriberId: req.user.id
-      })
-
+      const [subscribeUser, subscribeShip] =  await Promise.all([
+        User.findByPk(subscribeId),
+        Subscribeship.findOne({
+          where: { subscribeId, subscriberId: req.user.id }
+        })
+      ])
       const description = '訂閱了你的帳號'
-      await Notice.create({
-        userId: req.user.id,
-        description,
-        isRead: false,
-        notifyId: subscribeId
-      })
+      if (!subscribeUser) return next(new Error('用戶不存在'))
+      if (subscribeShip) return next(new Error('已訂閱此作者'))
+      await Promise.all([
+        Subscribeship.create({
+          subscribeId,
+          subscriberId: req.user.id
+        }),
+        Notice.create({
+          userId: req.user.id,
+          description,
+          isRead: false,
+          notifyId: subscribeId
+        })
+      ])
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
@@ -257,14 +253,26 @@ const userController = {
   deleteSubscribe: async (req, res, next) => {
     try {
       const { subscribeId } = req.params
-      const subscribeShip = await Subscribeship.findOne({
-        where: {
-          subscriberId: req.user.id,
-          subscribeId
-        }
-      })
-      if (!subscribeShip) throw new Error('尚未訂閱此用戶')
-      await subscribeShip.destroy()
+      const [subscribeUser, subscribeShip] = await Promise.all([
+        User.findByPk(subscribeId),
+        Subscribeship.findOne({
+          where: {
+            subscriberId: req.user.id,
+            subscribeId
+          }
+        })
+      ])
+      if (!subscribeUser) return next(new Error('用戶不存在'))
+      if (!subscribeShip) return next(new Error('尚未訂閱此用戶'))
+      await Promise.all([
+        Notice.destroy({
+          where: {
+            userId: req.user.id,
+            notifyId: subscribeId
+          }
+        }),
+        subscribeShip.destroy()
+      ])
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)

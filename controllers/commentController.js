@@ -16,15 +16,17 @@ const commentController = {
       
       req.flash('successMsg', '評論成功')
 
-      if (req.user.id === postInfo.userId) return res.redirect(`/posts/${postId}`)
-      Notice.create({
-        userId: req.user.id,
-        description: `評論了你的貼文: ${comment.content}`,
-        postId,
-        commentId: comment.id,
-        isRead: false,
-        notifyId: postInfo.userId
-      })
+      if (req.user.id !== postInfo.userId) {
+        Notice.create({
+          userId: req.user.id,
+          description: `評論了你的貼文: ${comment.content}`,
+          postId,
+          commentId: comment.id,
+          isRead: false,
+          notifyId: postInfo.userId
+        })
+          .catch(err => console.err('Notice creation failed:', err))
+      }
       return res.redirect(`/posts/${postId}`)
     } catch (err) {
       console.log('Error:', err)
@@ -33,11 +35,13 @@ const commentController = {
   },
   deleteComment: async (req, res, next) => {
     try {
-      const { postId } = req.body
       const commentId = req.params.id
       const comment = await Comment.findByPk(commentId)
+      if (!comment) {
+        req.flash ('errMsg', '評論不存在')
+        return res.redirect('back')
+      }
       await comment.destroy()
-      console.log('postId:', postId)
       req.flash('successMsg', '評論已刪除')
       return res.redirect('back')
     } catch (err) {

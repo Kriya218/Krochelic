@@ -10,13 +10,19 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Notice.belongsTo(models.User, { foreignKey: 'notifyId' })
+      Notice.belongsTo(models.User, { foreignKey: 'userId' })
     }
   }
   Notice.init({
     notifyId: DataTypes.INTEGER,
     description: DataTypes.TEXT,
-    userId: DataTypes.INTEGER,
+    userId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
     isRead: DataTypes.BOOLEAN,
     postId: DataTypes.INTEGER,
     likeId: DataTypes.INTEGER,

@@ -1,61 +1,64 @@
 const path = require('path') // don't delete
-const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice } = require('../models')
+const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice, Followship } = require('../models')
 const Op = require ('sequelize').Op 
 const { fn, col, literal } = require('sequelize')
 const { getOffset, getPagination } = require('../helpers/paginationHelpers')
+const redisClient  = require('../config/redis')
+const { fileHandler } = require('../helpers/file-helper')
 
 const postController = {
   feeds: async (req, res, next) => {
     try {
       const signInUser = req.user?.id
-      const categoryId = Number(req.query.categoryId) || ''
+      const categoryId = Number(req.query.categoryId) || null
       const page = Number(req.query.page) || 1
-      const limit = 16
+      const limit = 20
       const offset = getOffset(limit, page)
-      const keywords = req.query.keywords?.replace(/\s+/g,'').toLowerCase()
+      const keywords = req.query.keywords?.trim().toLowerCase() || null
       const search = keywords ? {
         [Op.or]: [
           { title: { [Op.like]: `%${keywords}%`} },
           { content: { [Op.like]: `%${keywords}%`} },
         ]
       } : {}
+      
+      const cacheKey = signInUser ? 
+        `feeds:${signInUser}:${categoryId || 'all'}:${page}:${keywords || 'all'}` : 
+        `feeds:guest:${categoryId || 'all'}:${page}:${keywords || 'all'}`
+
+      
+      const cachedFeeds = await redisClient.get(cacheKey)
+      if (cachedFeeds) {
+        console.log('使用 Redis 快取結果')
+        return res.render('feeds', JSON.parse(cachedFeeds))
+      }
+
       const categories = await Category.findAll({
         attributes:['id', 'name'],
         raw: true
       })
-      const likeIds = []
-      if (signInUser) {
-        await Like.findAll({
+      const likeIds = signInUser ? (await Like.findAll({
           where: { userId: signInUser },
           attributes: ['postId'],
           raw: true
-        })
-          .then(likes => likes.map(like => likeIds.push(like.postId)))
-      }
+      })).map(like => like.postId) : []
       
-      const posts = await Post.findAll({
-        where: { 
-          ...categoryId ? { categoryId } : {},
-          ...keywords ? search : {}
-        },
+      const whereCondition = { 
+        ...categoryId ? { categoryId } : {},
+        ...search
+      }
+      const { count: postCounts, rows: posts } = await Post.findAndCountAll({
+        where: whereCondition,
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
         include: [
-          {
-            model: Image,
-            limit: 1
-          },
-          {
-            model: Category,
-            attributes: ['name'],
-            raw: true
-          }
+          { model: Image, limit: 1},
+          { model: Category, attributes: ['name'], raw: true }
         ],
         limit,
         offset,
         order: [['createdAt', 'DESC']],
         nest: true
       })
-      const postCounts = await Post.count({where: { ...categoryId ? { categoryId } : {} }})
       
       let postsResult
       if (keywords && posts.length === 0) {
@@ -68,34 +71,30 @@ const postController = {
         }))
       }
 
-      return res.render('feeds', {
+      const responseData = {
         posts: postsResult,
         signInUser,
         categories,
         categoryId,
         pagination: getPagination(limit, page, postCounts)
-      })
+      }
+      await redisClient.set(cacheKey, JSON.stringify(responseData), { EX: 60 })
+      return res.render('feeds', responseData)
     } catch (err) {
-      console.log('Error:', err)
+      console.error('Feed page error:', err)
       next(err)
     }
   },
   home: async (req, res, next) => {
     try {
-      const signInUser = req.user.id
+      const signInUser = req.user?.id
       if (signInUser !== Number(req.params.userId)) {
-        req.flash('errMsg', '無檢視權限')
-        return res.redirect('back')
+        return next(new Error('無檢視權限'))
       }
       
-      const subscribes = await Subscribeship.findAll({
-        where: { subscriberId: signInUser },
-        attributes: ['subscribeId'],
-        raw: true
-      }).then(subs => subs.map(sub => sub.subscribeId))
-
+      const followingIds = await redisClient.sMembers(`user:${signInUser}:followings`)
       const posts = await Post.findAll({
-        where: { userId: subscribes },
+        where: { userId: followingIds },
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
         include: [
           {
@@ -108,8 +107,9 @@ const postController = {
           },
           {
             model: Like,
-            whee: { userId: signInUser },
+            where: { userId: signInUser },
             attributes: ['userId'],
+            required: false
           }
         ],
         limit: 12,
@@ -118,13 +118,13 @@ const postController = {
       })
       const formatPosts = posts.map(post => ({
         ...post.toJSON(),
-        image: post.Images[0].path,
+        image: post.Images[0]?.path,
         isLiked: post.Likes.some(like => like.userId === signInUser)
       }))
       
       return res.render('home', { signInUser, posts: formatPosts })
     } catch (err) {
-      console.log('Error:', err)
+      console.error('Home page err:', err)
       next(err)
     }
   },
@@ -175,7 +175,7 @@ const postController = {
       const sortedPostInfo = postsIdArr.map(id => postInfoMap[id])
       res.render('popular', { posts: sortedPostInfo, signInUser })
     } catch (err) {
-      console.log('Error:', err)
+      console.error('Popular page error:', err)
       next(err)
     }
   },
@@ -187,6 +187,7 @@ const postController = {
       })
       return res.render('posts/postCreate', { categories } )
     } catch (err) {
+      console.error('Create post page error:', err)
       next(err)
     }
   },
@@ -223,41 +224,51 @@ const postController = {
       }
       const formatPostInfo = postInfo.toJSON()
       const isLiked = signInUser ? !!(await Like.findOne({ where: { postId, userId: signInUser }})) : false
-      
       return res.render('posts/post', { postInfo: formatPostInfo, images, isLiked, signInUser, likes })
     } catch (err) {
-      console.log('Error:', err)
+      console.error('Post page error:', err)
       next(err)
     }
   },
   postPost: async (req, res, next) => {
     try {
+      const files = await req?.files
       const { title, categoryId, content } = req.body
-      const userId = req.user.id
-      const images = req?.files.map(file => {
-        return path.posix.join('upload', file.filename)
-      })
+      const signInUser = req.user.id
+      const images = await fileHandler(files)
+
+      if (images.length === 0 ) throw new Error('Images upload error')
       
-      const subscribeships = await Subscribeship.findAll({
-        where: { subscribeId: userId },
-        raw: true
-      })
-      const newPost = await Post.create({
-        title,
-        categoryId,
-        content,
-        userId
-      })
-      
-      if (images && images.length > 0) {
-        const imageInfos = images.map(img => {
-          return {
-            postId: newPost.id,
-            path: img
-          }
+      const [subscribeships, newPost] = await Promise.all([
+        Subscribeship.findAll({
+          where: { subscribeId: signInUser },
+          raw: true
+        }),
+        Post.create({
+          title,
+          categoryId,
+          content,
+          userId: signInUser
         })
+      ])
+      if (images.length > 0) {
+        let imageInfos
+        if (typeof images === 'string') {
+          return imageInfos = { postId: newPost.id, path: images}
+        } else {
+          imageInfos = images.map(img => {
+            return {
+              postId: newPost.id,
+              path: img
+            }
+          })
+        }
         await Image.bulkCreate(imageInfos)
       }
+      await Promise.all([
+        redisClient.del(`feeds:${signInUser}:all:1:all`),
+        redisClient.del(`feeds:guest:all:1:all`)
+      ])
       if (subscribeships.length === 0) {
         req.flash('successMsg', '貼文上傳成功')
         return res.redirect(`/profile/${req.user.id}`)
@@ -267,25 +278,24 @@ const postController = {
           subscribeships.map(subscribe => {
             const subscriberId = subscribe.subscriberId
             return Notice.create({
-              userId,
+              userId: signInUser,
               description: `發布了新貼文${title}`,
               postId: newPost.id,
               isRead: false,
               notifyId: subscriberId
-            })
+            }).catch(err => {
+                console.error('Create subscribe notice error:', err)
+                next(err)
+              })
           })
         )
           .then(() => {
             req.flash('successMsg', '貼文上傳成功')
             return res.redirect(`/profile/${req.user.id}`)
           })
-          .catch(err => {
-            console.log('Error:', err)
-            next(err)
-          })
       }
     } catch (err) {
-      console.log('ERROR:', err)
+      console.error('Post post error:', err)
       next(err)
     }
   },
@@ -303,7 +313,7 @@ const postController = {
       if (postInfo.userId !== req.user.id) throw new Error('無編輯權限')
       return res.render('posts/postEdit', { postInfo, categories })
     } catch (err) {
-      console.log('Error:',err)
+      console.error('Edit post error:',err)
       next(err)
     }
   },
@@ -312,40 +322,53 @@ const postController = {
       const { title, categoryId, content } = req.body
       const postId = req.params.id
       const postInfo = await Post.findByPk(postId)
+      if (!postInfo) throw new Error('貼文不存在')
       await postInfo.update({ title, categoryId, content })
       req.flash('successMsg', '貼文編輯成功')
       return res.redirect(`/posts/${postId}`)
     } catch (err) {
-      console.log('Error:', err)
-      next(err)
+      console.error('Put post error:', err)
+      return next(err)
     }
   },
   deletePost: async (req, res, next) => {
     try {
       const postId = req.params.id
-      const post = await Post.findByPk(postId)
-      if (!post) throw new Error('貼文不存在')
-      if (post.userId !== req.user.id) throw new Error('無刪除權限')
-      await post.destroy()
+      const postInfo = await Post.findByPk(postId)
+      if (!postInfo) throw new Error('貼文不存在')
+      if (postInfo.userId !== req.user.id) throw new Error('無刪除權限')
+      await postInfo.destroy()
+      await Notice.destroy({ where: { postId } })
       req.flash('successMsg', '貼文刪除成功')
       return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {
-      console.log('Error:', err)
-      next(err)
+      console.error('Delete post error:', err)
+      return next(err)
     }
   },
   addLike: async (req, res, next) => {
     try {
+      const signInUser = req.user?.id
       const { postId } = req.params
-      const postInfo = await Post.findByPk(postId, {
-        attributes: ['userId', 'title'],
-        raw: true
-      })
+      const [postInfo, likeShip] = await Promise.all([
+        Post.findByPk(postId, {
+          attributes: ['userId', 'title'],
+          raw: true
+        }),
+        Like.findOne({
+          where: {
+            postId,
+            userId: req.user.id
+          },
+          attributes: ['id'],
+          raw: true
+        })
+      ])
+      if (likeShip) throw new Error('已按讚過此篇貼文')
       const like = await Like.create({
         postId,
         userId: req.user.id
       })
-      console.log('like:', like.id)
       if (req.user.id === postInfo.userId) return res.redirect('back')
       
       await Notice.create({
@@ -356,6 +379,10 @@ const postController = {
         isRead: false,
         notifyId: postInfo.userId
       })
+      const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
+      if (keysToDelete.length > 0) {
+        await redisClient.del(keysToDelete)
+      }
       
       return res.redirect('back')
     } catch (err) {
@@ -364,22 +391,29 @@ const postController = {
     }
   },
   removeLike: async (req, res, next) => {
+    const { postId } = req.params
+    const signInUser = req.user?.id
     try {
-      const { postId } = req.params
-      const like = await Like.findOne({
+      const likeShip = await Like.findOne({
         where: {
           postId,
-          userId: req.user.id
+          userId: signInUser
         },
         attributes: ['id'],
         raw: true
       })
+      if (!likeShip) throw new Error('尚未按讚此篇貼文')
+      await Like.destroy({ where: { id: likeShip.id } })
+      await Notice.destroy({ where: { likeId: likeShip.id } })
+
+      const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
+      if (keysToDelete.length > 0) {
+        await redisClient.del(keysToDelete)
+      }
       
-      await Notice.destroy({ where: { likeId: like.id } })
-      await Like.destroy({ where: { id: like.id } })
       return res.redirect('back')
     } catch (err) {
-      console.log('Error:', err)
+      console.error('Remove like error:', err)
       next(err)
     }
   },

@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const passport = require('../config/passport')
 const { authenticated } = require('../middleware/auth')
-const upload = require('../middleware/multer')
+const { upload } = require('../helpers/file-helper')
 const userController = require('../controllers/userController')
 const postController = require('../controllers/postController')
 const commentController = require('../controllers/commentController')
@@ -48,7 +48,7 @@ router.get('/profile/:id/edit', authenticated, userController.editProfile)
 router.put('/profile/:id', authenticated, upload.single('image'), userController.putProfile)
 router.get('/profile/:id', userController.profile)
 
-router.get('/notice/:userId', authenticated, noticeController.getNotice)
+router.get('/notice/:notifyUserId', authenticated, noticeController.getNotice)
 
 router.get('/feeds', postController.feeds)
 
