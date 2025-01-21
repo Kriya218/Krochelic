@@ -70,7 +70,7 @@ setupWebSocket(io)
 app.use(routes)
 
 server.listen(port, () => {
-  console.log(`express server on http://localhost:${port}`)
+  console.log(`express server is listening`)
 })
 
 module.exports = app
