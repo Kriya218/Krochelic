@@ -66,11 +66,14 @@ io.use((socket, next) => {
 })
 
 setupWebSocket(io)
+app.get('/health', (req, res) => {
+    res.status(200).send('OK')
+})
 
 app.use(routes)
 
-server.listen(port, () => {
-  console.log(`express server is listening`)
+server.listen(port, '0.0.0.0', () => {
+  console.log(`express server is listening on port ${port}`)
 })
 
 module.exports = app
