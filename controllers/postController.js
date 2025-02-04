@@ -3,7 +3,7 @@ const { User, Post, Category, Image, Comment, Like, Subscribeship, Notice, Follo
 const Op = require ('sequelize').Op 
 const { fn, col, literal } = require('sequelize')
 const { getOffset, getPagination } = require('../helpers/paginationHelpers')
-const redisClient  = require('../config/redis')
+// const redisClient  = require('../config/redis')
 const { fileHandler } = require('../helpers/file-helper')
 
 const postController = {
@@ -27,11 +27,11 @@ const postController = {
         `feeds:guest:${categoryId || 'all'}:${page}:${keywords || 'all'}`
 
       
-      const cachedFeeds = await redisClient.get(cacheKey)
-      if (cachedFeeds) {
-        console.log('使用 Redis 快取結果')
-        return res.render('feeds', JSON.parse(cachedFeeds))
-      }
+      // const cachedFeeds = await redisClient.get(cacheKey)
+      // if (cachedFeeds) {
+      //   console.log('使用 Redis 快取結果')
+      //   return res.render('feeds', JSON.parse(cachedFeeds))
+      // }
 
       const categories = await Category.findAll({
         attributes:['id', 'name'],
@@ -78,7 +78,7 @@ const postController = {
         categoryId,
         pagination: getPagination(limit, page, postCounts)
       }
-      await redisClient.set(cacheKey, JSON.stringify(responseData), { EX: 60 })
+      // await redisClient.set(cacheKey, JSON.stringify(responseData), { EX: 60 })
       return res.render('feeds', responseData)
     } catch (err) {
       console.error('Feed page error:', err)
@@ -92,7 +92,13 @@ const postController = {
         return next(new Error('無檢視權限'))
       }
       
-      const followingIds = await redisClient.sMembers(`user:${signInUser}:followings`)
+      // const followingIds = await redisClient.sMembers(`user:${signInUser}:followings`)
+      const followingIds = await Followship.findAll({
+        where: { followerId: signInUser },
+        attributes: ['followingId'],
+        raw: true
+      }).then(followings => followings.map(following => following.followingId))
+      console.log('followingIds:', followingIds)
       const posts = await Post.findAll({
         where: { userId: followingIds },
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
@@ -265,10 +271,10 @@ const postController = {
         }
         await Image.bulkCreate(imageInfos)
       }
-      await Promise.all([
-        redisClient.del(`feeds:${signInUser}:all:1:all`),
-        redisClient.del(`feeds:guest:all:1:all`)
-      ])
+      // await Promise.all([
+      //   redisClient.del(`feeds:${signInUser}:all:1:all`),
+      //   redisClient.del(`feeds:guest:all:1:all`)
+      // ])
       if (subscribeships.length === 0) {
         req.flash('successMsg', '貼文上傳成功')
         return res.redirect(`/profile/${req.user.id}`)
@@ -379,10 +385,10 @@ const postController = {
         isRead: false,
         notifyId: postInfo.userId
       })
-      const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
-      if (keysToDelete.length > 0) {
-        await redisClient.del(keysToDelete)
-      }
+      // const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
+      // if (keysToDelete.length > 0) {
+      //   await redisClient.del(keysToDelete)
+      // }
       
       return res.redirect('back')
     } catch (err) {
@@ -406,10 +412,10 @@ const postController = {
       await Like.destroy({ where: { id: likeShip.id } })
       await Notice.destroy({ where: { likeId: likeShip.id } })
 
-      const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
-      if (keysToDelete.length > 0) {
-        await redisClient.del(keysToDelete)
-      }
+      // const keysToDelete = await redisClient.keys(`feeds:${signInUser}:*`)
+      // if (keysToDelete.length > 0) {
+      //   await redisClient.del(keysToDelete)
+      // }
       
       return res.redirect('back')
     } catch (err) {

@@ -10,3 +10,4 @@ data/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 .nginx.conf
+time.txt

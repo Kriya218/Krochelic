@@ -1,7 +1,7 @@
 const { User, Post, Image, Followship, Subscribeship, Notice } = require('../models')
 const bcrypt = require('bcryptjs')
 const path = require('path')
-const redisClient = require('../config/redis')
+// const redisClient = require('../config/redis')
 const { fileHandler } = require('../helpers/file-helper')
 
 const userController = {
@@ -49,6 +49,7 @@ const userController = {
         attributes:['id', 'name', 'image'],
         include: [
           { model: User, as: 'Followers', attributes: ['id'] },
+          { model: User, as: 'Followings', attributes: ['id'] },
           { 
             model: Post,
             attributes: ['id'],
@@ -65,8 +66,15 @@ const userController = {
         nest: true
       })
       if (profileInfos.length === 0) throw new Error('用戶不存在')
-      const profileUserFollowingIds = await redisClient.sMembers(`user:${profileId}:followings`)
-      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
+      // const profileUserFollowingIds = await redisClient.sMembers(`user:${profileId}:followings`)
+      // const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
+      const signInUserFollowingIds = signInUser ?
+        await Followship.findAll({
+          where: { followerId: signInUser },
+          attributes: ['followingId'],
+          raw: true
+        }).then(followings => followings.map(following => following.followingId)) : []
+      console.log('signInUserFollowingIds:', signInUserFollowingIds)
 
       const subscribeShip = signInUser ? await Subscribeship.findOne({ 
           where: { 
@@ -80,10 +88,11 @@ const userController = {
         postsCount: profileInfos.Posts.length,
         postInfos: profileInfos.Posts.map(image => ({ id: image.id, path: image.Images[0].path })),
         followersCount: profileInfos.Followers.length,
-        followingsCount: profileUserFollowingIds.length,
-        isFollowing: signInUserFollowingIds.includes(profileId.toString()),
+        followingsCount: profileInfos.Followings.length,
+        isFollowing: signInUserFollowingIds.includes(profileId),
         isSubscribe: subscribeShip ? true : false
       }
+      console.log('isFollowing:', formatProfileInfo.isFollowing)
       return res.render('user/profile', { 
         profile: formatProfileInfo,
         profileId,
@@ -141,10 +150,10 @@ const userController = {
         followingId: userId, 
         followerId: signInUser
       })
-      await redisClient.sAdd(`user:${signInUser}:followings`, userId, (err, res) => {
-        if (err) return next(err)
-        console.log('Add followings to cache:', res)
-      })
+      // await redisClient.sAdd(`user:${signInUser}:followings`, userId, (err, res) => {
+      //   if (err) return next(err)
+      //   console.log('Add followings to cache:', res)
+      // })
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
@@ -160,10 +169,10 @@ const userController = {
       })
       if (!followship) throw new Error('尚未追蹤此使用者')
       await followship.destroy()
-      await redisClient.sRem(`user:${signInUser}:followings`, userId, (err, res) => {
-        if (err) return next(err)
-        console.log('Remove following from cache:', res)
-      })
+      // await redisClient.sRem(`user:${signInUser}:followings`, userId, (err, res) => {
+      //   if (err) return next(err)
+      //   console.log('Remove following from cache:', res)
+      // })
       return res.redirect('back')
     } catch (err) {
       console.log('Error:', err)
@@ -175,7 +184,7 @@ const userController = {
       const signInUser = req.user?.id 
       const profileId = req.params.userId
       if (!profileId) throw new Error('用戶不存在')
-      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
+      // const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : []
       const followingInfo = await User.findByPk(profileId, {
         include: [{
           model: User,
@@ -185,9 +194,19 @@ const userController = {
         nest: true
       })
       
+      let userFollowArr = []
+      if (signInUser) {
+        const userFollowInfo = await User.findByPk(signInUser, {
+          attributes: [],
+          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
+          nest: true
+        })
+        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
+      }
+
       const followings = followingInfo?.toJSON().Followings.map(f => ({
         ...f,
-        isFollowing: signInUserFollowingIds.includes((f.id).toString())
+        isFollowing: userFollowArr.includes((f.id).toString())
       }))
       return res.render('user/followings', { followings, signInUser, profileId })
     } catch (err) {
@@ -200,7 +219,7 @@ const userController = {
       const signInUser = req.user?.id 
       const profileUser = req.params.userId
       if (!profileUser) throw new Error('用戶不存在')
-      const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : [] 
+      // const signInUserFollowingIds = signInUser ? await redisClient.sMembers(`user:${signInUser}:followings`) : [] 
       const followerInfo = await User.findByPk(profileUser, {
         include: [{
           model: User,
@@ -210,9 +229,19 @@ const userController = {
         nest: true
       })
       
+      let userFollowArr = []
+      if (signInUser) {
+        const userFollowInfo = await User.findByPk(signInUser, {
+          attributes: [],
+          include: [{ model: User, as: 'Followings', attributes: ['id'] }],
+          nest: true
+        })
+        userFollowArr = userFollowInfo.toJSON().Followings.map(f => f.id)
+      }
+
       const followers = followerInfo?.toJSON().Followers.map(f => ({
         ...f,
-        isFollowing: signInUserFollowingIds.includes((f.id).toString())
+        isFollowing: userFollowArr.includes((f.id).toString())
       }))
       return res.render('user/followers', { followers, signInUser, profileUser })
     } catch (err) {

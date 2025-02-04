@@ -6,8 +6,8 @@ const express = require('express')
 const flash = require('connect-flash')
 const session = require('express-session')
 const path = require('path')
-const { RedisStore } = require('connect-redis')
-const redisClient = require('./config/redis')
+// const { RedisStore } = require('connect-redis')
+// const redisClient = require('./config/redis')
 
 const { engine } = require('express-handlebars')
 const passport = require('./config/passport')
@@ -25,6 +25,10 @@ const routes = require ('./routes')
 
 const port = process.env.PORT || 3000
 
+app.get('/health', (req, res) => {
+    res.status(200).send('OK')
+})
+
 app.engine('.hbs', engine({ extname: '.hbs', helpers: handlebarsHelpers }))
 app.set('view engine', '.hbs')
 app.set('views', './views')
@@ -33,21 +37,21 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static('public'))
 app.use(express.json())
 app.use(methodOverride('_method'))
-const redisStore = new RedisStore({
-  client: redisClient,
-  prefix: 'krochelic:'
-})
+// const redisStore = new RedisStore({
+//   client: redisClient,
+//   prefix: 'krochelic:'
+// })
 const sessionMiddleware = session({
-  store: redisStore,
+  // store: redisStore,
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 1000 * 60 * 60 * 24,
-    httpOnly: true,
-    sameSite: 'lax'
-  } 
+  // cookie: {
+  //   secure: false,
+  //   maxAge: 1000 * 60 * 60 * 24,
+  //   httpOnly: true,
+  //   sameSite: 'lax'
+  // } 
 })
 app.use(sessionMiddleware)
 app.use(flash())
@@ -66,9 +70,7 @@ io.use((socket, next) => {
 })
 
 setupWebSocket(io)
-app.get('/health', (req, res) => {
-    res.status(200).send('OK')
-})
+
 
 app.use(routes)
 
