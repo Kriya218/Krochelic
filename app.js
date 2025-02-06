@@ -37,6 +37,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static('public'))
 app.use(express.json())
 app.use(methodOverride('_method'))
+app.use('/upload', express.static(path.join(__dirname, 'upload')))
 // const redisStore = new RedisStore({
 //   client: redisClient,
 //   prefix: 'krochelic:'
@@ -54,11 +55,11 @@ const sessionMiddleware = session({
   // } 
 })
 app.use(sessionMiddleware)
-app.use(flash())
+
 app.use(passport.initialize())
 app.use(passport.session())
+app.use(flash())
 
-app.use('/upload', express.static(path.join(__dirname, 'upload')))
 app.use((req, res, next) => {
   res.locals.successMsg = req.flash('successMsg')
   res.locals.errMsg = req.flash('errMsg')

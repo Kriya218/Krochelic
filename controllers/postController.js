@@ -98,7 +98,6 @@ const postController = {
         attributes: ['followingId'],
         raw: true
       }).then(followings => followings.map(following => following.followingId))
-      console.log('followingIds:', followingIds)
       const posts = await Post.findAll({
         where: { userId: followingIds },
         attributes: ['id', 'title', 'userId', 'categoryId', 'createdAt'],
@@ -242,9 +241,7 @@ const postController = {
       const { title, categoryId, content } = req.body
       const signInUser = req.user.id
       const images = await fileHandler(files)
-
       if (images.length === 0 ) throw new Error('Images upload error')
-      
       const [subscribeships, newPost] = await Promise.all([
         Subscribeship.findAll({
           where: { subscribeId: signInUser },
@@ -260,14 +257,12 @@ const postController = {
       if (images.length > 0) {
         let imageInfos
         if (typeof images === 'string') {
-          return imageInfos = { postId: newPost.id, path: images}
+          imageInfos = [{ postId: newPost.id, path: images }]
         } else {
-          imageInfos = images.map(img => {
-            return {
-              postId: newPost.id,
-              path: img
-            }
-          })
+          imageInfos = images.map(img => ({
+            postId: newPost.id,
+            path: img
+          }))
         }
         await Image.bulkCreate(imageInfos)
       }

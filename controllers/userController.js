@@ -74,7 +74,6 @@ const userController = {
           attributes: ['followingId'],
           raw: true
         }).then(followings => followings.map(following => following.followingId)) : []
-      console.log('signInUserFollowingIds:', signInUserFollowingIds)
 
       const subscribeShip = signInUser ? await Subscribeship.findOne({ 
           where: { 
@@ -92,7 +91,6 @@ const userController = {
         isFollowing: signInUserFollowingIds.includes(profileId),
         isSubscribe: subscribeShip ? true : false
       }
-      console.log('isFollowing:', formatProfileInfo.isFollowing)
       return res.render('user/profile', { 
         profile: formatProfileInfo,
         profileId,
@@ -120,7 +118,8 @@ const userController = {
   putProfile: async (req, res, next) => {
     try {
       const { name } = req.body
-      const { file } = req
+      const  file  = req?.file
+      if (!file) { console.log('未接收到圖片') }
       const [filePath, profileInfo] = await Promise.all([
         fileHandler(file),
         User.findByPk(req.user.id)
@@ -134,7 +133,7 @@ const userController = {
       req.flash('編輯成功')
       return res.redirect(`/profile/${req.user.id}`)
     } catch (err) {
-      console.log(err)
+      console.error(err) 
       next(err)
     }
   },
