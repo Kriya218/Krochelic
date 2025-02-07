@@ -6,6 +6,8 @@ A website for craft lovers to share their creations and interact with other crea
 ## Table of contents
 - [Introduction](#Introduction)
 - [Test Accounts](#Test-Accounts)
+- [System Architecture](#System-Architecture)
+- [Database Schema](#Database-Schema)
 - [Technical Highlights](#Technical-Highlights)
 - [Features](#Features)
 - [Tech Stack](#Tech-Stack)
@@ -25,13 +27,23 @@ Password: 12345678
 Email: user2@example.com
 Password: 12345678
 ```
+## System Architecture
+- **Domain & Routing:** AWS Route 53 for DNS management
+- **Server & Deployment:** Deployed on AWS EC2 with Nginx as a reverse proxy
+- **Backend Framework:** Node.js + Express for handling API requests and business logic
+- **Database:** Sequelize ORM with AWS RDS (MySQL) for database management
+- **Real-time Notification:** Socket.IO for instant user notifications
+- **File Storage:** AWS S3 for storing user-uploaded images
+![Krochelic_SCD](https://github.com/user-attachments/assets/4b9e7530-824c-4c31-a32f-b5e8ae05b18a)
+
+## Database Schema
+![Krochelic_ERD](https://github.com/user-attachments/assets/964f63f8-1c65-4986-b19a-93302b2d8028)
 
 ## Technical Highlights
-
 - MVC Design Pattern
 - RESTful APIs
-- Real-time notification with Socket.io 
-- Containerized with Docker
+- Real-time notification with Socket.IO 
+- Nginx SSL Certificate
 
 ## Features
 - Sign In & Sign out
@@ -47,9 +59,10 @@ Password: 12345678
 - Change user name & avatar photo
 
 ## Tech Stack
-**Server** :  Node / Express / Nginx / Socket.IO / multer
-
+**Client:** Handlebars / Socket.IO / JavaScript
+**Server:** Node.js / Express / Nginx / Socket.IO / Multer
 **Database:** MySQL
+**AWS Services:** Elastic Beanstalk / Route 53 / EC2 / RDS / S3
 
 ## Screenshots
 ### Feeds Page
