@@ -1,7 +1,8 @@
 ![Krochelic logo](https://github.com/user-attachments/assets/d2b73130-672a-45d8-980c-ebbb019c91ef)
 
 # Krochelic
-A website for craft lovers to share their creations and interact with other creators.
+- A website for craft lovers to share their creations and interact with other creators.
+- Visit Website: https://krochelic.com
 
 ## Table of contents
 - [Introduction](#Introduction)
