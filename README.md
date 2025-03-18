@@ -12,6 +12,8 @@
 - [Technical Highlights](#Technical-Highlights)
 - [Features](#Features)
 - [Tech Stack](#Tech-Stack)
+- [Demo](#Demo)
+- [Screenshots](#Screenshots)
 - [Installation](#Installation)
   - [Prerequisities](#Prerequisities)
   - [Execution Setup](#Execution-Setup)
@@ -65,6 +67,8 @@ Password: 12345678
 **Database:** MySQL
 **AWS Services:** Elastic Beanstalk / Route 53 / EC2 / RDS / S3
 
+## Demo
+https://github.com/user-attachments/assets/e41db86a-a8f1-45b3-a2cd-ebe460c04d75
 ## Screenshots
 ### Feeds Page
 ![feeds](https://github.com/user-attachments/assets/d122790d-45ce-4457-9197-b14f59bd5bd3)
